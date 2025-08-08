@@ -194,15 +194,22 @@
       const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
 
       const rateInputs = Array.from(document.querySelectorAll(".rate-input"));
-      if (rateInputs.length < months) {
+      const expectedRateCount = years * 2;
+      if (rateInputs.length < expectedRateCount) {
         alert("金利の入力が不足しています。");
         return;
       }
 
-      const rates = rateInputs.map(input => parseFloat(input.value));
-      if (rates.some(r => isNaN(r))) {
+      const halfYearRates = rateInputs.map(input => parseFloat(input.value));
+      if (halfYearRates.some(r => isNaN(r))) {
         alert("すべての金利欄に有効な数字を入力してください。");
         return;
+      }
+
+      const monthlyRates = [];
+      for (let i = 0; i < years; i++) {
+        monthlyRates.push(...Array(6).fill(halfYearRates[i * 2]));
+        monthlyRates.push(...Array(6).fill(halfYearRates[i * 2 + 1]));
       }
 
       let remaining = amount;
@@ -212,7 +219,7 @@
       const monthlyPrincipal = repaymentType === "principalEqual" ? amount / months : null;
 
       for (let i = 0; i < months; i++) {
-        const rate = rates[i] / 100 / 12;
+        const rate = monthlyRates[i] / 100 / 12;
         let interest = remaining * rate;
         let principal, payment;
 
