@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>住宅ローンシミュレーター（半年変動＋グラフ）</title>
+<title>住宅ローンシミュレーター（手動金利入力）</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body {
@@ -27,6 +27,10 @@
     margin-top: 0.2rem;
     font-size: 1rem;
   }
+  .rate-inputs input {
+    width: 30%;
+    margin: 0.2rem 0.2rem 0 0;
+  }
   button {
     margin-top: 1.5rem;
     padding: 1rem;
@@ -37,10 +41,6 @@
     border: none;
     border-radius: 4px;
   }
-  button[type="button"] {
-    background-color: #007f8f;
-    margin-top: 0.5rem;
-  }
   #result {
     background: #fff;
     padding: 1rem;
@@ -50,47 +50,36 @@
     white-space: pre-line;
     font-size: 1rem;
   }
-  .affiliate {
-    margin-top: 2rem;
-    text-align: center;
-  }
-  .affiliate a {
-    display: inline-block;
-    background: #00a99d;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 1rem;
-  }
 </style>
 </head>
 <body>
-<h1>🏠 住宅ローンシミュレーター（半年変動＋グラフ）</h1><label>借入額（万円） <input type="number" id="amount" value="3000" /> </label>
+<h1>🏠 住宅ローンシミュレーター（手動金利入力）</h1><label>借入額（万円） <input type="number" id="amount" value="3000" /> </label>
 
-<label>返済期間（年） <input type="number" id="years" value="35" /> </label>
+<label>返済期間（年） <input type="number" id="years" value="35" onchange="generateRateInputs()" /> </label>
 
-<button onclick="simulate()">シミュレーションする</button>
+<div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
 
-<div style="margin-top: 1em;">
-  <p>📈 金利モデルを選択：</p>
-  <button type="button" onclick="setRateModel('optimistic')">😄 楽観モデル</button>
-  <button type="button" onclick="setRateModel('neutral')">😐 中立モデル</button>
-  <button type="button" onclick="setRateModel('pessimistic')">😨 悲観モデル</button>
-</div><div id="result"></div>
-<canvas id="chart" width="400" height="200"></canvas><div class="affiliate">
-  <a href="https://px.a8.net/svt/ejp?a8mat=YOUR-ID" target="_blank">
-    📎 住宅ローンを見直すならこちら
-  </a>
-</div><script>
-let currentRateArray = [];
-let chart;
+<div id="result"></div>
+<canvas id="chart" width="400" height="200"></canvas><script>
+function generateRateInputs() {
+  const years = parseInt(document.getElementById("years").value);
+  const container = document.getElementById("rate-inputs");
+  container.innerHTML = '<label>半年ごとの金利（%）を入力してください：</label>';
+  const halfYears = years * 2;
+  for (let i = 0; i < halfYears; i++) {
+    const input = document.createElement("input");
+    input.type = "number";
+    input.step = "0.01";
+    input.placeholder = `${Math.floor(i/2)+1}年目${i%2===0 ? '前半' : '後半'}`;
+    input.id = `rate-${i}`;
+    container.appendChild(input);
+  }
+}
 
 function simulateDetailed(amount, rateArray) {
   const totalMonths = rateArray.length * 6;
   let remainingPrincipal = amount;
   let totalPaid = 0;
-  let monthlyPayments = [];
   let principalHistory = [];
   let labels = [];
 
@@ -108,7 +97,6 @@ function simulateDetailed(amount, rateArray) {
     if (remainingPrincipal < 0) remainingPrincipal = 0;
 
     totalPaid += monthlyPayment;
-    monthlyPayments.push(monthlyPayment);
 
     if (month % 12 === 0) {
       principalHistory.push(Math.round(remainingPrincipal));
@@ -119,7 +107,6 @@ function simulateDetailed(amount, rateArray) {
   return {
     totalPaid,
     totalInterest: totalPaid - amount,
-    monthlyPayments,
     principalHistory,
     labels
   };
@@ -128,14 +115,19 @@ function simulateDetailed(amount, rateArray) {
 function simulate() {
   const amount = parseFloat(document.getElementById("amount").value) * 10000;
   const years = parseInt(document.getElementById("years").value);
+  const halfYears = years * 2;
+  let rateArray = [];
 
-  if (!amount || !years) return;
-  if (!currentRateArray.length || currentRateArray.length !== years * 2) {
-    setRateModel('neutral');
-    return;
+  for (let i = 0; i < halfYears; i++) {
+    const val = parseFloat(document.getElementById(`rate-${i}`).value);
+    if (isNaN(val)) {
+      alert("すべての金利を入力してください。");
+      return;
+    }
+    rateArray.push(val);
   }
 
-  const result = simulateDetailed(amount, currentRateArray);
+  const result = simulateDetailed(amount, rateArray);
   const avgMonthly = result.totalPaid / (years * 12);
 
   document.getElementById("result").innerHTML = `
@@ -149,34 +141,7 @@ function simulate() {
   drawChart(result.labels, result.principalHistory);
 }
 
-function setRateModel(model) {
-  const years = parseInt(document.getElementById("years").value);
-  if (!years) return;
-
-  let rates = [];
-  let baseRate = 0.8;
-  let maxRate, step;
-
-  if (model === 'pessimistic') {
-    maxRate = 3.5;
-    step = 0.125;
-  } else if (model === 'neutral') {
-    maxRate = 2.0;
-    step = 0.05;
-  } else {
-    maxRate = 0.8;
-    step = 0.0;
-  }
-
-  const halfYears = years * 2;
-  for (let i = 0; i < halfYears; i++) {
-    rates.push(Math.min(baseRate + step * i, maxRate));
-  }
-
-  currentRateArray = rates;
-  simulate();
-}
-
+let chart;
 function drawChart(labels, data) {
   const ctx = document.getElementById('chart').getContext('2d');
   if (chart) chart.destroy();
@@ -201,7 +166,7 @@ function drawChart(labels, data) {
       },
       scales: {
         y: {
-          beginAtZero: true,
+          beginAtZero: false,
           ticks: {
             callback: function(value) {
               return value.toLocaleString() + '円';
