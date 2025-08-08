@@ -27,9 +27,18 @@
     margin-top: 0.2rem;
     font-size: 1rem;
   }
-  .rate-inputs input {
+  .rate-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+  }
+  .rate-input-row span {
     width: 30%;
-    margin: 0.2rem 0.2rem 0 0;
+    font-size: 0.95rem;
+  }
+  .rate-input-row input {
+    width: 70%;
   }
   button {
     margin-top: 1.5rem;
@@ -59,7 +68,7 @@
 
 <div>
   <label>すべての期間に一括金利を設定：</label>
-  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" style="width: 40%" />
+  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.0" style="width: 40%" />
   <button type="button" onclick="applyBulkRate()" style="width: 100%; margin-top: 0.5rem;">すべてに反映</button>
 </div><div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
 
@@ -71,12 +80,22 @@ function generateRateInputs() {
   container.innerHTML = '<label>半年ごとの金利（%）を入力してください：</label>';
   const halfYears = years * 2;
   for (let i = 0; i < halfYears; i++) {
+    const row = document.createElement("div");
+    row.className = "rate-input-row";
+
+    const label = document.createElement("span");
+    label.textContent = `${Math.floor(i / 2) + 1}年目${i % 2 === 0 ? '（前半）' : '（後半）'}`;
+
     const input = document.createElement("input");
     input.type = "number";
     input.step = "0.01";
-    input.placeholder = `${Math.floor(i/2)+1}年目${i%2===0 ? '前半' : '後半'}`;
+    input.placeholder = "例: 1.0";
     input.id = `rate-${i}`;
-    container.appendChild(input);
+    input.value = "1.0";
+
+    row.appendChild(label);
+    row.appendChild(input);
+    container.appendChild(row);
   }
 }
 
@@ -118,7 +137,7 @@ function simulateDetailed(amount, rateArray) {
 
     if (month % 12 === 0) {
       principalHistory.push(Math.round(remainingPrincipal));
-      labels.push(`${Math.floor(month/12)}年目`);
+      labels.push(`${Math.floor(month / 12)}年目`);
     }
   }
 
