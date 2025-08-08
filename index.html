@@ -79,6 +79,20 @@
     canvas {
       margin-top: 2rem;
     }
+
+    .rate-input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+    .rate-input-row span {
+      width: 20%;
+      font-size: 0.95rem;
+    }
+    .rate-input-row input {
+      width: 35%;
+    }
   </style>
 </head>
 <body onload="generateRateInputs()">
@@ -112,6 +126,7 @@
   <div id="rate-inputs"></div>
 
   <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
+  <p style="font-size: 0.9rem; margin-top: -1rem; color: #444;">※各ポイントを上下にドラッグで調整できます</p>
   <canvas id="rateChart" height="100"></canvas>
 
   <button onclick="simulate()">シミュレーションする</button>
@@ -124,6 +139,7 @@
   <canvas id="stackedChart" height="100"></canvas>
 
   <div id="repayment-table"></div>
+
   <script>
 let lastSimData = [];
 let rateChartInstance = null;
@@ -171,6 +187,7 @@ function generateRateInputs() {
 
     const row = document.createElement("div");
     row.className = "rate-input-row";
+
     const label = document.createElement("span");
     label.textContent = `${y}年目`;
 
@@ -275,7 +292,7 @@ function drawRateChart() {
         }
       }
     },
-    plugins: [Chart.plugins.getAll().find(p => p.id === 'dragdata')]
+    plugins: [Chart.registry.getPlugin('dragdata')]
   });
 }
 
@@ -290,7 +307,7 @@ function downloadExcel() {
   XLSX.writeFile(workbook, "loan_simulation.xlsx");
 }
 
-// simulate() はここでは省略、前バージョンの内容＋残高・返済額・積み上げグラフを含む関数を使ってください
+// 🔁 simulate 関数（＋残高・返済・積み上げグラフ）は前回の内容を統合してください
 
 </script>
 </body>
