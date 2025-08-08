@@ -73,6 +73,12 @@
 </label><div class="section-title">返済期間</div>
 <label>
   <input type="number" id="years" value="35" onchange="generateRateInputs()" />
+</label><div class="section-title">返済方式</div>
+<label>
+  <input type="radio" name="repaymentType" value="principalEqual" checked /> 元金均等返済
+</label>
+<label>
+  <input type="radio" name="repaymentType" value="principalAndInterestEqual" /> 元利均等返済
 </label><div class="section-title">金利</div>
 <div>
   <label>すべての期間に一括金利を設定：</label>
@@ -142,18 +148,28 @@ function simulate() {
   const years = parseInt(document.getElementById("years").value);
   const rates = Array.from(document.querySelectorAll(".rate-input")).map(input => parseFloat(input.value));
   const months = years * 12;
-  const monthlyPrincipal = amount / months;
+  const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
 
   let remaining = amount;
   let totalInterest = 0;
   let balanceData = [];
   let labels = [];
+  let monthlyPrincipal = repaymentType === "principalEqual" ? amount / months : null;
 
   for (let i = 0; i < months; i++) {
     const rate = rates[i] / 100 / 12;
-    const interest = remaining * rate;
-    const principal = monthlyPrincipal;
-    const payment = principal + interest;
+    let interest = remaining * rate;
+    let principal, payment;
+
+    if (repaymentType === "principalEqual") {
+      principal = monthlyPrincipal;
+      payment = principal + interest;
+    } else {
+      const n = months - i;
+      payment = remaining * rate / (1 - Math.pow(1 + rate, -n));
+      principal = payment - interest;
+    }
+
     totalInterest += interest;
     remaining -= principal;
     balanceData.push(Math.max(remaining, 0));
@@ -161,7 +177,6 @@ function simulate() {
   }
 
   document.getElementById("result").textContent =
-    `月々元本返済額: ${(monthlyPrincipal).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円\n` +
     `総返済額: ${(amount + totalInterest).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円\n` +
     `うち利息: ${(totalInterest).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円`;
 
