@@ -34,11 +34,11 @@
     margin-top: 0.4rem;
   }
   .rate-input-row span {
-    width: 30%;
+    width: 20%;
     font-size: 0.95rem;
   }
   .rate-input-row input {
-    width: 70%;
+    width: 40%;
   }
   button {
     margin-top: 1.5rem;
@@ -79,22 +79,30 @@ function generateRateInputs() {
   const container = document.getElementById("rate-inputs");
   container.innerHTML = '<label>半年ごとの金利（%）を入力してください：</label>';
   const halfYears = years * 2;
-  for (let i = 0; i < halfYears; i++) {
+  for (let y = 0; y < years; y++) {
     const row = document.createElement("div");
     row.className = "rate-input-row";
 
     const label = document.createElement("span");
-    label.textContent = `${Math.floor(i / 2) + 1}年目${i % 2 === 0 ? '（前半）' : '（後半）'}`;
+    label.textContent = `${y + 1}年目`;
 
-    const input = document.createElement("input");
-    input.type = "number";
-    input.step = "0.01";
-    input.placeholder = "例: 1.0";
-    input.id = `rate-${i}`;
-    input.value = "1.0";
+    const input1 = document.createElement("input");
+    input1.type = "number";
+    input1.step = "0.01";
+    input1.placeholder = "前半";
+    input1.id = `rate-${y * 2}`;
+    input1.value = "1.0";
+
+    const input2 = document.createElement("input");
+    input2.type = "number";
+    input2.step = "0.01";
+    input2.placeholder = "後半";
+    input2.id = `rate-${y * 2 + 1}`;
+    input2.value = "1.0";
 
     row.appendChild(label);
-    row.appendChild(input);
+    row.appendChild(input1);
+    row.appendChild(input2);
     container.appendChild(row);
   }
 }
