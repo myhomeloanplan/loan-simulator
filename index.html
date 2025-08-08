@@ -76,7 +76,7 @@
 </label><div class="section-title">金利</div>
 <div>
   <label>すべての期間に一括金利を設定：</label>
-  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.0" style="width: 40%" />
+  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.00" style="width: 40%" />
   <button type="button" onclick="applyBulkRate()" style="width: 100%; margin-top: 0.5rem;">すべてに一括入力</button>
 </div><div>
   <label>N年目以降に一括で金利を設定：</label>
@@ -87,6 +87,109 @@
 
 <div id="result"></div>
 <canvas id="chart" width="400" height="200"></canvas><script>
-// JavaScript は省略（前の内容と同じ）
+function generateRateInputs() {
+  const container = document.getElementById("rate-inputs");
+  container.innerHTML = "";
+  const years = parseInt(document.getElementById("years").value);
+  const fromYearSelect = document.getElementById("from-year");
+  fromYearSelect.innerHTML = "";
+  for (let y = 1; y <= years; y++) {
+    const option = document.createElement("option");
+    option.value = y;
+    option.textContent = `${y} 年目以降`;
+    fromYearSelect.appendChild(option);
+
+    const row = document.createElement("div");
+    row.className = "rate-input-row";
+    const label = document.createElement("span");
+    label.textContent = `${y}年目`;
+    const input1 = document.createElement("input");
+    input1.type = "number";
+    input1.step = "0.01";
+    input1.value = "1.00";
+    input1.className = "rate-input";
+    input1.dataset.index = (y - 1) * 2;
+    const input2 = document.createElement("input");
+    input2.type = "number";
+    input2.step = "0.01";
+    input2.value = "1.00";
+    input2.className = "rate-input";
+    input2.dataset.index = (y - 1) * 2 + 1;
+    row.appendChild(label);
+    row.appendChild(input1);
+    row.appendChild(input2);
+    container.appendChild(row);
+  }
+}
+
+function applyBulkRate() {
+  const rate = parseFloat(document.getElementById("bulk-rate").value).toFixed(2);
+  document.querySelectorAll(".rate-input").forEach(input => input.value = rate);
+}
+
+function applyRateFromYear() {
+  const fromYear = parseInt(document.getElementById("from-year").value);
+  const rate = parseFloat(document.getElementById("from-rate").value).toFixed(2);
+  const inputs = document.querySelectorAll(".rate-input");
+  const startIndex = (fromYear - 1) * 2;
+  for (let i = startIndex; i < inputs.length; i++) {
+    inputs[i].value = rate;
+  }
+}
+
+function simulate() {
+  const amount = parseFloat(document.getElementById("amount").value) * 10000;
+  const years = parseInt(document.getElementById("years").value);
+  const rates = Array.from(document.querySelectorAll(".rate-input")).map(input => parseFloat(input.value));
+  const months = years * 12;
+  const monthlyPrincipal = amount / months;
+
+  let remaining = amount;
+  let totalInterest = 0;
+  let balanceData = [];
+  let labels = [];
+
+  for (let i = 0; i < months; i++) {
+    const rate = rates[i] / 100 / 12;
+    const interest = remaining * rate;
+    const principal = monthlyPrincipal;
+    const payment = principal + interest;
+    totalInterest += interest;
+    remaining -= principal;
+    balanceData.push(Math.max(remaining, 0));
+    labels.push(`${Math.floor(i / 12) + 1}年${i % 12 + 1}月`);
+  }
+
+  document.getElementById("result").textContent =
+    `月々元本返済額: ${(monthlyPrincipal).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円\n` +
+    `総返済額: ${(amount + totalInterest).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円\n` +
+    `うち利息: ${(totalInterest).toLocaleString(undefined, { maximumFractionDigits: 0 })} 円`;
+
+  const ctx = document.getElementById("chart").getContext("2d");
+  if (window.chartInstance) window.chartInstance.destroy();
+  window.chartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "元本残高の推移",
+        data: balanceData,
+        borderColor: "#0074D9",
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => value.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+}
 </script></body>
 </html>
