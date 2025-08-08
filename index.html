@@ -30,7 +30,7 @@
     .info-box span {
       font-size: 1.5rem;
     }
-    input[type="number"], input[type="text"] {
+    input[type="number"], input[type="text"], input[type="range"] {
       padding: 0.5rem;
       font-size: 1rem;
       width: 100%;
@@ -40,6 +40,12 @@
       font-weight: bold;
       font-size: 20px;
       margin-top: 2rem;
+    }
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
     }
     .rate-input-row {
       display: flex;
@@ -83,7 +89,7 @@
   </style>
 </head>
 <body onload="generateRateInputs()">
-  <h1>🏠 住宅ローンシミュレーター2253</h1>
+  <h1>🏠 住宅ローンシミュレーター2300</h1>
 
   <div class="info-box">
     <span>ℹ️</span>
@@ -94,10 +100,18 @@
   </div>
 
   <div class="section-title">借入額（円）</div>
-  <input type="text" id="amount" value="50,000,000" oninput="formatNumberInput(this)" />
+  <input type="text" id="amount" value="50,000,000" oninput="syncAmountFromText()" />
+  <div class="range-labels">
+    <span>1,000万円</span><span>1億円</span>
+  </div>
+  <input type="range" id="amount-range" min="10000000" max="100000000" step="100000" value="50000000" oninput="syncAmountFromRange()" />
 
   <div class="section-title">返済期間（年）</div>
-  <input type="number" id="years" value="35" onchange="generateRateInputs()" />
+  <input type="number" id="years" value="35" oninput="syncYearsFromInput()" />
+  <div class="range-labels">
+    <span>1年</span><span>50年</span>
+  </div>
+  <input type="range" id="years-range" min="1" max="50" step="1" value="35" oninput="syncYearsFromRange()" />
 
   <div class="section-title">返済方式</div>
   <label><input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済</label>
@@ -129,9 +143,28 @@
   <script>
     let lastSimData = [];
 
-    function formatNumberInput(input) {
-      let num = input.value.replace(/[^\d]/g, "");
-      input.value = Number(num).toLocaleString();
+    function syncAmountFromRange() {
+      const val = parseInt(document.getElementById("amount-range").value);
+      document.getElementById("amount").value = val.toLocaleString();
+    }
+
+    function syncAmountFromText() {
+      const raw = document.getElementById("amount").value.replace(/[^\d]/g, '');
+      const num = parseInt(raw || "0");
+      document.getElementById("amount-range").value = num;
+      document.getElementById("amount").value = num.toLocaleString();
+    }
+
+    function syncYearsFromRange() {
+      const val = parseInt(document.getElementById("years-range").value);
+      document.getElementById("years").value = val;
+      generateRateInputs();
+    }
+
+    function syncYearsFromInput() {
+      const val = parseInt(document.getElementById("years").value);
+      document.getElementById("years-range").value = val;
+      generateRateInputs();
     }
 
     function parseAmount(value) {
