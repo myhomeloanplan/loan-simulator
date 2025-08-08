@@ -21,7 +21,7 @@
     margin-top: 1rem;
     font-size: 1rem;
   }
-  input {
+  input[type="number"] {
     padding: 0.5rem;
     width: 100%;
     margin-top: 0.2rem;
@@ -70,6 +70,11 @@
   <label>すべての期間に一括金利を設定：</label>
   <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.0" style="width: 40%" />
   <button type="button" onclick="applyBulkRate()" style="width: 100%; margin-top: 0.5rem;">すべてに反映</button>
+</div><div>
+  <label>N年目以降に一括で金利を設定：</label>
+  <select id="from-year"></select>
+  <input type="number" id="from-rate" step="0.01" placeholder="例: 1.5" style="width: 40%" />
+  <button type="button" onclick="applyRateFromYear()" style="width: 100%; margin-top: 0.5rem;">N年目以降に反映</button>
 </div><div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
 
 <div id="result"></div>
@@ -79,6 +84,7 @@ function generateRateInputs() {
   const container = document.getElementById("rate-inputs");
   container.innerHTML = '<label>半年ごとの金利（%）を入力してください：</label>';
   const halfYears = years * 2;
+
   for (let y = 0; y < years; y++) {
     const row = document.createElement("div");
     row.className = "rate-input-row";
@@ -91,24 +97,35 @@ function generateRateInputs() {
     input1.step = "0.01";
     input1.placeholder = "前半";
     input1.id = `rate-${y * 2}`;
-    input1.value = "1.0";
+    input1.value = "1.00";
+    input1.oninput = () => input1.value = parseFloat(input1.value).toFixed(2);
 
     const input2 = document.createElement("input");
     input2.type = "number";
     input2.step = "0.01";
     input2.placeholder = "後半";
     input2.id = `rate-${y * 2 + 1}`;
-    input2.value = "1.0";
+    input2.value = "1.00";
+    input2.oninput = () => input2.value = parseFloat(input2.value).toFixed(2);
 
     row.appendChild(label);
     row.appendChild(input1);
     row.appendChild(input2);
     container.appendChild(row);
   }
+
+  const fromYearSelect = document.getElementById("from-year");
+  fromYearSelect.innerHTML = "";
+  for (let i = 1; i <= years; i++) {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = `${i}年目以降`;
+    fromYearSelect.appendChild(option);
+  }
 }
 
 function applyBulkRate() {
-  const bulkValue = parseFloat(document.getElementById("bulk-rate").value);
+  const bulkValue = parseFloat(document.getElementById("bulk-rate").value).toFixed(2);
   const years = parseInt(document.getElementById("years").value);
   const halfYears = years * 2;
   if (isNaN(bulkValue)) {
@@ -118,6 +135,18 @@ function applyBulkRate() {
   for (let i = 0; i < halfYears; i++) {
     const field = document.getElementById(`rate-${i}`);
     if (field) field.value = bulkValue;
+  }
+}
+
+function applyRateFromYear() {
+  const fromYear = parseInt(document.getElementById("from-year").value);
+  const rate = parseFloat(document.getElementById("from-rate").value).toFixed(2);
+  const years = parseInt(document.getElementById("years").value);
+  const halfYears = years * 2;
+  const startIndex = (fromYear - 1) * 2;
+  for (let i = startIndex; i < halfYears; i++) {
+    const field = document.getElementById(`rate-${i}`);
+    if (field) field.value = rate;
   }
 }
 
