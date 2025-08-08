@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>住宅ローンシミュレーター</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f5f5f5;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input {
+      padding: 0.5rem;
+      width: 100%;
+      margin-top: 0.2rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      width: 100%;
+      font-size: 1.1rem;
+    }
+    #result {
+      background: #fff;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .affiliate {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .affiliate a {
+      display: inline-block;
+      background: #0044cc;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏠 住宅ローンシミュレーター</h1>
+
+  <label>借入額（万円）
+    <input type="number" id="amount" value="3000" />
+  </label>
+
+  <label>金利（年利 %）
+    <input type="number" id="rate" value="1.2" step="0.01" />
+  </label>
+
+  <label>返済期間（年）
+    <input type="number" id="years" value="35" />
+  </label>
+
+  <button onclick="simulate()">シミュレーションする</button>
+
+  <div id="result"></div>
+
+  <div class="affiliate">
+    <!-- アフィリエイトリンクをここに！ -->
+    <a href="https://px.a8.net/svt/ejp?a8mat=YOUR-ID" target="_blank">
+      📎 住宅ローンを見直すならこちら
+    </a>
+  </div>
+
+  <script>
+    function simulate() {
+      const amount = parseFloat(document.getElementById("amount").value) * 10000;
+      const rate = parseFloat(document.getElementById("rate").value) / 100 / 12;
+      const years = parseInt(document.getElementById("years").value) * 12;
+
+      if (!amount || !rate || !years) return;
+
+      const monthly = (amount * rate) / (1 - Math.pow(1 + rate, -years));
+      const total = monthly * years;
+      const interest = total - amount;
+
+      document.getElementById("result").innerHTML = `
+        <h2>📊 結果</h2>
+        <p>月々の返済額：<strong>${monthly.toLocaleString()} 円</strong></p>
+        <p>総返済額：<strong>${total.toLocaleString()} 円</strong></p>
+        <p>うち利息：<strong>${interest.toLocaleString()} 円</strong></p>
+      `;
+    }
+  </script>
+</body>
+</html>
