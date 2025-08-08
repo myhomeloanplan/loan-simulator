@@ -79,7 +79,6 @@
     canvas {
       margin-top: 2rem;
     }
-
     .rate-input-row {
       display: flex;
       align-items: center;
@@ -247,7 +246,7 @@ function updateInputsFromRateChart(rates) {
   rates.forEach((r, i) => {
     inputs[i].value = parseFloat(r).toFixed(2);
   });
-  simulate(); // グラフを変更したら即時再計算
+  simulate(); // グラフ変更時に再計算
 }
 
 function drawRateChart() {
@@ -287,12 +286,138 @@ function drawRateChart() {
           round: 2,
           showTooltip: true,
           onDragEnd: function (e, datasetIndex, index, value) {
-            updateInputsFromRateChart(rateChartInstance.data.datasets[0].data);
+            const data = rateChartInstance.data.datasets[0].data;
+            data[index] = value;
+            if (index > 0) data[index - 1] = (data[index - 1] + value) / 2;
+            if (index < data.length - 1) data[index + 1] = (data[index + 1] + value) / 2;
+            updateInputsFromRateChart(data);
+            rateChartInstance.update();
           }
         }
       }
     },
     plugins: [Chart.registry.getPlugin('dragdata')]
+  });
+}
+
+function simulate() {
+  const amount = parseAmount(document.getElementById("amount").value);
+  const years = parseInt(document.getElementById("years").value);
+  const months = years * 12;
+  const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
+  const rates = Array.from(document.querySelectorAll(".rate-input")).map(el => parseFloat(el.value) / 100);
+
+  if (rates.length < months / 6) {
+    alert("金利の入力が不足しています。");
+    return;
+  }
+
+  let balance = amount;
+  const result = [];
+  let totalPrincipal = 0;
+  let totalInterest = 0;
+
+  for (let m = 0; m < months; m++) {
+    const rate = rates[Math.floor(m / 6)] || 0;
+    const monthlyRate = rate / 12;
+
+    let interest = balance * monthlyRate;
+    let principal;
+
+    if (repaymentType === "principalAndInterestEqual") {
+      const r = monthlyRate;
+      const payment = r > 0 ? amount * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1) : amount / months;
+      interest = balance * r;
+      principal = payment - interest;
+    } else {
+      principal = amount / months;
+      interest = balance * monthlyRate;
+    }
+
+    balance -= principal;
+    totalPrincipal += principal;
+    totalInterest += interest;
+
+    result.push({
+      月: m + 1,
+      元金: Math.round(principal),
+      利息: Math.round(interest),
+      残高: Math.round(balance < 0 ? 0 : balance),
+      支払額: Math.round(principal + interest)
+    });
+  }
+
+  lastSimData = result;
+  displayResult(result, totalPrincipal, totalInterest);
+  drawCharts(result);
+}
+
+function displayResult(data, totalPrincipal, totalInterest) {
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = `🏁 総返済額: ${(totalPrincipal + totalInterest).toLocaleString()} 円\n📊 総利息: ${totalInterest.toLocaleString()} 円`;
+
+  const table = document.createElement("table");
+  const thead = table.createTHead();
+  const tbody = table.createTBody();
+
+  thead.innerHTML = "<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>";
+  data.forEach(row => {
+    const tr = tbody.insertRow();
+    ["月", "元金", "利息", "支払額", "残高"].forEach(key => {
+      const td = tr.insertCell();
+      td.textContent = row[key].toLocaleString();
+    });
+  });
+
+  const container = document.getElementById("repayment-table");
+  container.innerHTML = "";
+  container.appendChild(table);
+}
+
+function drawCharts(data) {
+  const labels = data.map(d => d["月"]);
+  const principalData = data.map(d => d["元金"]);
+  const interestData = data.map(d => d["利息"]);
+  const balanceData = data.map(d => d["残高"]);
+  const paymentData = data.map(d => d["支払額"]);
+
+  new Chart(document.getElementById("balanceChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "ローン残高",
+        data: balanceData,
+        borderColor: "blue",
+        fill: false
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("paymentChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "月々の支払額",
+        data: paymentData,
+        backgroundColor: "green"
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("stackedChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "元金", data: principalData, backgroundColor: "#4CAF50" },
+        { label: "利息", data: interestData, backgroundColor: "#FF9800" }
+      ]
+    },
+    options: {
+      scales: { x: { stacked: true }, y: { stacked: true } }
+    }
   });
 }
 
@@ -306,9 +431,6 @@ function downloadExcel() {
   XLSX.utils.book_append_sheet(workbook, worksheet, "返済シミュレーション");
   XLSX.writeFile(workbook, "loan_simulation.xlsx");
 }
-
-// 🔁 simulate 関数（＋残高・返済・積み上げグラフ）は前回の内容を統合してください
-
 </script>
 </body>
 </html>
