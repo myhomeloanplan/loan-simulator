@@ -22,35 +22,14 @@
     margin-top: 1rem;
     font-size: 1rem;
   }
-  input[type="number"], input[type="text"] {
+  input[type="number"], input[type="text"], select {
     padding: 0.5rem;
     font-size: 1rem;
-    box-sizing: border-box;
   }
-  /* 情報パネル */
-  .info-panel {
-    background: #e7f3fe;
-    border: 1px solid #b3d4fc;
-    border-radius: 8px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.8rem;
+  input[type="text"] {
+    width: 100%;
+    margin-top: 0.2rem;
   }
-  .info-panel svg {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    fill: #2196f3;
-    margin-top: 3px;
-  }
-  .info-panel p {
-    margin: 0;
-    color: #0b3d91;
-    line-height: 1.4;
-  }
-
   .rate-input-row {
     display: flex;
     align-items: center;
@@ -62,19 +41,9 @@
     font-size: 0.95rem;
   }
   .rate-input-row input {
-    width: 35%;
+    width: 40%;
   }
-  .rate-input-row button {
-    width: 30%;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.9rem;
-    background-color: #005b96;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  button.full-width {
+  button {
     margin-top: 1.5rem;
     padding: 1rem;
     width: 100%;
@@ -99,80 +68,49 @@
     font-size: 20px;
     margin-top: 2rem;
   }
-  /* 一括入力ブロック */
-  .bulk-rate-container {
+  .info-panel {
+    background: #e1f0fb;
+    border: 1px solid #82c0fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .info-icon {
+    font-size: 1.8rem;
+    color: #0074d9;
+  }
+  .inline-flex {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.4rem;
-    margin-bottom: 1rem;
   }
-  .bulk-rate-container label {
-    width: 45%;
-    margin: 0;
-    font-weight: normal;
-    font-size: 1rem;
-  }
-  .bulk-rate-container input[type="number"] {
-    width: 35%;
-  }
-  .bulk-rate-container button {
-    width: 20%;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.9rem;
-    background-color: #005b96;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  /* セレクトと入力の横並び */
-  .bulk-from-year-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.4rem;
-  }
-  .bulk-from-year-container label {
-    width: 45%;
-    margin: 0;
-    font-weight: normal;
-    font-size: 1rem;
-  }
-  .bulk-from-year-container select,
-  .bulk-from-year-container input[type="number"] {
-    width: 25%;
-  }
-  .bulk-from-year-container button {
-    width: 25%;
-    padding: 0.5rem 0.7rem;
-    font-size: 0.9rem;
-    background-color: #005b96;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  select, input[type="number"] {
+    margin-top: 0.2rem;
   }
 </style>
 </head>
 <body onload="generateRateInputs()">
 <h1>🏠 住宅ローンシミュレーター（手動金利入力）</h1>
 
-<div class="info-panel" role="region" aria-label="説明">
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path d="M11 17h2v-6h-2v6zm0-8h2V7h-2v2zm1-5C6.48 4 2 8.48 2 14s4.48 10 10 10 10-4.48 10-10S17.52 4 12 4zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-  </svg>
-  <p>借入額、返済期間、半年ごとの金利を入力して、元利均等返済か元金均等返済を選択すると、毎月の返済額や利息、元本の推移をグラフでシミュレーションできます。<br>金利は半年ごとに細かく設定でき、一括入力も可能です。</p>
+<div class="info-panel">
+  <div class="info-icon">ℹ️</div>
+  <div>
+    借入額、返済期間、金利を入力して、毎月の返済額や利息、元本の推移をシミュレーションできます。<br>
+    金利は半年ごとに個別設定でき、また一括入力も可能です。返済方式も切り替えられます。
+  </div>
 </div>
 
 <div class="section-title">借入額（円）</div>
 <label>
-  <input type="text" id="amount" value="3,000,000" oninput="formatNumberInput(this)" />
+  <input type="text" id="amount" value="50,000,000" oninput="formatNumberInput(this)" />
 </label>
 
 <div class="section-title">返済期間（年）</div>
 <label>
-  <input type="number" id="years" value="35" min="1" max="50" onchange="generateRateInputs()" />
+  <input type="number" id="years" value="35" onchange="generateRateInputs()" min="1" max="50" />
 </label>
 
 <div class="section-title">返済方式</div>
@@ -184,30 +122,33 @@
 </label>
 
 <div class="section-title">金利</div>
-
-<div class="bulk-rate-container">
-  <label for="bulk-rate">すべての期間に一括金利を設定：</label>
-  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.00" value="1.00" />
-  <button type="button" onclick="applyBulkRate()">すべてに一括入力</button>
+<div class="inline-flex" style="align-items:flex-end; gap: 0.5rem; margin-top: 0.3rem;">
+  <label style="font-weight:bold; margin-bottom:0;">全期間一括設定：</label>
+  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.00" style="width: 100px;" />
+  <button type="button" onclick="applyBulkRate()" style="width: 130px; padding: 0.4rem;">すべてに一括入力</button>
 </div>
 
-<div class="bulk-from-year-container">
-  <label for="from-year">N年目以降に一括で金利を設定：</label>
-  <select id="from-year"></select>
-  <input type="number" id="from-rate" step="0.01" placeholder="例: 1.50" />
-  <button type="button" onclick="applyRateFromYear()">N年目以降に一括入力</button>
+<div class="inline-flex" style="align-items:flex-end; gap: 0.5rem; margin-top: 1rem;">
+  <label style="font-weight:bold; margin-bottom:0;">N年目以降に一括設定：</label>
+  <select id="from-year" style="width: 80px;"></select>
+  <input type="number" id="from-rate" step="0.01" placeholder="例: 1.5" style="width: 100px;" />
+  <button type="button" onclick="applyRateFromYear()" style="width: 130px; padding: 0.4rem;">N年目以降に一括入力</button>
 </div>
 
 <div id="rate-inputs" class="rate-inputs"></div>
 
-<button class="full-width" onclick="simulate()">シミュレーションする</button>
+<button onclick="simulate()">シミュレーションする</button>
 
 <div id="result"></div>
-<canvas id="chart" width="400" height="200"></canvas>
+<canvas id="chart" width="400" height="200" style="margin-top: 1rem;"></canvas>
 
 <script>
 function formatNumberInput(input) {
   let num = input.value.replace(/[^\d]/g, "");
+  if(num === "") {
+    input.value = "";
+    return;
+  }
   input.value = Number(num).toLocaleString();
 }
 
@@ -234,14 +175,12 @@ function generateRateInputs() {
     const input1 = document.createElement("input");
     input1.type = "number";
     input1.step = "0.01";
-    input1.min = "0";
     input1.value = "1.00";
     input1.className = "rate-input";
     input1.dataset.index = (y - 1) * 2;
     const input2 = document.createElement("input");
     input2.type = "number";
     input2.step = "0.01";
-    input2.min = "0";
     input2.value = "1.00";
     input2.className = "rate-input";
     input2.dataset.index = (y - 1) * 2 + 1;
@@ -268,7 +207,7 @@ function applyRateFromYear() {
 }
 
 function simulate() {
-  const amount = parseAmount(document.getElementById("amount").value) * 1;
+  const amount = parseAmount(document.getElementById("amount").value);
   const years = parseInt(document.getElementById("years").value);
   const rates = Array.from(document.querySelectorAll(".rate-input")).map(input => parseFloat(input.value));
   const months = years * 12;
@@ -297,7 +236,7 @@ function simulate() {
     totalInterest += interest;
     remaining -= principal;
     balanceData.push(Math.max(remaining, 0));
-    labels.push(`${Math.floor(i / 12) + 1}年${i % 12 + 1}月`);
+    labels.push(`${Math.floor(i / 12) + 1}年${(i % 12) + 1}月`);
   }
 
   document.getElementById("result").textContent =
