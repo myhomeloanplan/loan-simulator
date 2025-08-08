@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（前3ポイント補正）</title>
+  <title>住宅ローンシミュレーター（前3ポイントなだらか版）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; max-width: 1100px; margin: auto; font-size: 18px; }
     h1 { text-align: center; }
-    input[type="number"], input[type="text"], input[type="range"], select { padding: 0.5rem; font-size: 1rem; width: 100%; box-sizing: border-box; }
+    input, select { padding: 0.5rem; font-size: 1rem; width: 100%; box-sizing: border-box; }
     .section-title { font-weight: bold; font-size: 20px; margin-top: 2rem; }
     .range-labels { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; }
     .inline-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
@@ -28,24 +28,20 @@
 <body onload="generateRateInputs()">
   <h1>🏠 住宅ローンシミュレーター</h1>
 
-  <!-- 借入額 -->
   <div class="section-title">借入額（円）</div>
   <input type="text" id="amount" value="50,000,000" oninput="syncAmountFromText()" />
   <div class="range-labels"><span>1,000万円</span><span>1億円</span></div>
   <input type="range" id="amount-range" min="10000000" max="100000000" step="100000" value="50000000" oninput="syncAmountFromRange()" />
 
-  <!-- 返済期間 -->
   <div class="section-title">返済期間（年）</div>
   <input type="number" id="years" value="35" oninput="syncYearsFromInput()" />
   <div class="range-labels"><span>1年</span><span>50年</span></div>
   <input type="range" id="years-range" min="1" max="50" step="1" value="35" oninput="syncYearsFromRange()" />
 
-  <!-- 返済方式 -->
   <div class="section-title">返済方式</div>
   <label><input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済</label>
   <label><input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済</label>
 
-  <!-- 金利入力 -->
   <div class="section-title">金利（半年ごと）</div>
   <div class="inline-group">
     <input type="number" id="bulk-rate" step="0.01" value="1.00" />
@@ -59,19 +55,15 @@
 
   <div id="rate-inputs"></div>
 
-  <!-- ドラッググラフ -->
   <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
-  <p style="font-size: 0.9rem; margin-top: -1rem; color: #444;">※点をドラッグすると「その点以降は同じ金利」「それ以前は前3ポイントだけなだらかに近づく」</p>
+  <p style="font-size: 0.9rem; margin-top: -1rem; color: #444;">※点をドラッグすると「その点以降は同じ金利」「前は最大3ポイントだけなだらかに近づく」</p>
   <canvas id="rateChart" height="100"></canvas>
 
-  <!-- ボタン -->
   <button onclick="simulate()">シミュレーションする</button>
   <button onclick="downloadExcel()">📥 Excelダウンロード</button>
 
-  <!-- 結果表示 -->
   <div id="result"></div>
 
-  <!-- グラフ -->
   <canvas id="balanceChart" height="100"></canvas>
   <canvas id="paymentChart" height="100"></canvas>
   <canvas id="stackedChart" height="100"></canvas>
@@ -79,12 +71,10 @@
   <div id="repayment-table"></div>
 
   <script>
-  // --- グローバル変数 ---
   let lastSimData = [];
   let rateChartInstance = null;
   let balanceChart = null, paymentChart = null, stackedChart = null;
 
-  // --- 入出力同期 ---
   function syncAmountFromRange() {
     const val = parseInt(document.getElementById('amount-range').value);
     document.getElementById('amount').value = val.toLocaleString();
@@ -107,7 +97,6 @@
   }
   function parseAmount(v) { return parseFloat(v.replace(/,/g, '')); }
 
-  // --- 金利入力欄生成 ---
   function generateRateInputs() {
     const container = document.getElementById('rate-inputs');
     container.innerHTML = '';
@@ -131,20 +120,17 @@
     drawRateChart();
   }
 
-  // --- 入力→グラフ ---
   function updateRateChartFromInputs() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
     if (rateChartInstance) { rateChartInstance.data.datasets[0].data = rates; rateChartInstance.update(); }
   }
-  // --- グラフ→入力 ---
   function updateInputsFromRateChart(rates) {
     const inputs = document.querySelectorAll('.rate-input');
     rates.forEach((r, i) => { inputs[i].value = parseFloat(r).toFixed(2); });
     simulate();
   }
 
-  // --- 一括適用 ---
   function applyBulkRate() {
     const rate = parseFloat(document.getElementById('bulk-rate').value);
     if (isNaN(rate)) return alert('有効な金利を入力してください。');
@@ -161,7 +147,6 @@
     updateRateChartFromInputs();
   }
 
-  // --- 金利グラフ ---
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -181,14 +166,12 @@
             round: 2,
             showTooltip: true,
             onDragEnd: function (e, datasetIndex, index, value) {
-              const oldData = rateChartInstance.data.datasets[0].data;
+              const oldData = [...rateChartInstance.data.datasets[0].data];
               const newRates = [...oldData];
               const len = newRates.length;
-
-              const SMOOTH_PRE_RANGE = 3; // 前3ポイントのみ補正
+              const SMOOTH_PRE_RANGE = 3; // 前3ポイント（1.5年）
 
               for (let i = index; i < len; i++) newRates[i] = value;
-
               const start = Math.max(0, index - SMOOTH_PRE_RANGE);
               const span = index - start;
               if (span > 0) {
@@ -208,7 +191,6 @@
     });
   }
 
-  // --- シミュレーション ---
   function simulate() {
     const amount = parseAmount(document.getElementById('amount').value);
     const years = parseInt(document.getElementById('years').value);
@@ -259,7 +241,6 @@
     drawCharts(result);
   }
 
-  // --- 結果表示 ---
   function displayResult(data, totalPrincipal, totalInterest) {
     const totalRepayment = Math.ceil(totalPrincipal + totalInterest);
     const interestRounded = Math.ceil(totalInterest);
@@ -279,7 +260,6 @@
     tableWrap.appendChild(table);
   }
 
-  // --- グラフ ---
   function drawCharts(data) {
     const labels = data.map(d => d['月']);
     const principalData = data.map(d => d['元金']);
@@ -304,7 +284,6 @@
     });
   }
 
-  // --- Excel出力 ---
   function downloadExcel() {
     if (!lastSimData.length) { alert('まずシミュレーションを実行してください。'); return; }
     const ws = XLSX.utils.json_to_sheet(lastSimData);
