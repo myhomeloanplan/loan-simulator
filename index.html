@@ -4,13 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>住宅ローンシミュレーター（元本推移対応）</title>
+
 <style>
   body {
     font-family: sans-serif;
     padding: 2rem;
-    background: #f5f5f5;
+    background: #f0f4f8;
     max-width: 600px;
     margin: auto;
+    font-size: 18px;
   }
   h1 {
     text-align: center;
@@ -18,17 +20,27 @@
   label {
     display: block;
     margin-top: 1rem;
+    font-size: 1rem;
   }
   input {
     padding: 0.5rem;
     width: 100%;
     margin-top: 0.2rem;
+    font-size: 1rem;
   }
   button {
     margin-top: 1.5rem;
     padding: 1rem;
     width: 100%;
     font-size: 1.1rem;
+    background-color: #005b96;
+    color: white;
+    border: none;
+    border-radius: 4px;
+  }
+  button[type="button"] {
+    background-color: #007f8f;
+    margin-top: 0.5rem;
   }
   #result {
     background: #fff;
@@ -37,6 +49,7 @@
     border-radius: 8px;
     box-shadow: 0 0 5px rgba(0,0,0,0.1);
     white-space: pre-line;
+    font-size: 1rem;
   }
   .affiliate {
     margin-top: 2rem;
@@ -44,11 +57,12 @@
   }
   .affiliate a {
     display: inline-block;
-    background: #0044cc;
+    background: #00a99d;
     color: white;
     padding: 1rem 2rem;
     border-radius: 8px;
     text-decoration: none;
+    font-size: 1rem;
   }
 </style>
 </head>
