@@ -67,7 +67,13 @@
   </label>
 
   <button onclick="simulate()">シミュレーションする</button>
-
+<div style="margin-top: 1em;">
+  <p>📈 金利モデルを選択：</p>
+  <button type="button" onclick="setRateModel('optimistic')">😄 楽観モデル</button>
+  <button type="button" onclick="setRateModel('neutral')">😐 中立モデル</button>
+  <button type="button" onclick="setRateModel('pessimistic')">😨 悲観モデル</button>
+</div>
+  
   <div id="result"></div>
 
   <div class="affiliate">
@@ -92,7 +98,53 @@
       const monthlyRounded = Math.ceil(monthly);
 const totalRounded = Math.ceil(total);
 const interestRounded = Math.ceil(interest);
+function setRateModel(model) {
+  const years = parseInt(document.getElementById("years").value);
+  const amount = parseFloat(document.getElementById("amount").value) * 10000;
 
+  if (!amount || !years) return;
+
+  let rates = [];
+  let baseRate = 0.8;
+  let maxRate = model === 'pessimistic' ? 3.5 : model === 'neutral' ? 2.0 : 0.8;
+  let step = model === 'pessimistic' ? 0.25 : model === 'neutral' ? 0.1 : 0.0;
+
+  for (let i = 0; i < years; i++) {
+    rates.push(Math.min(baseRate + step * i, maxRate));
+  }
+
+  simulateWithVariableRates(amount, rates);
+}
+
+function simulateWithVariableRates(amount, rateArray) {
+  const months = rateArray.length * 12;
+  let total = 0;
+  let monthlyList = [];
+
+  for (let year = 0; year < rateArray.length; year++) {
+    const yearlyRate = rateArray[year] / 100;
+    const monthlyRate = yearlyRate / 12;
+    const monthsLeft = (rateArray.length - year) * 12;
+
+    const monthly = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -monthsLeft));
+    total += monthly * 12;
+    monthlyList.push(monthly);
+  }
+
+  const averageMonthly = total / months;
+  const interest = total - amount;
+
+  const monthlyRounded = Math.ceil(averageMonthly);
+  const totalRounded = Math.ceil(total);
+  const interestRounded = Math.ceil(interest);
+
+  document.getElementById("result").innerHTML = `
+    <h2>📊 金利モデル結果</h2>
+    <p>平均 月々返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
+    <p>総返済額：<strong>${totalRounded.toLocaleString()} 円</strong></p>
+    <p>うち利息：<strong>${interestRounded.toLocaleString()} 円</strong></p>
+  `;
+}
 document.getElementById("result").innerHTML = `
   <h2>📊 結果</h2>
   <p>月々の返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
