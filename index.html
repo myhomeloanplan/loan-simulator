@@ -126,28 +126,23 @@
       simulateWithVariableRates(amount, rates);
     }
 
+    // ここを平均金利計算に変更しました
     function simulateWithVariableRates(amount, rateArray) {
+      const averageRate = rateArray.reduce((sum, r) => sum + r, 0) / rateArray.length;
+      const monthlyRate = (averageRate / 100) / 12;
       const months = rateArray.length * 12;
-      let total = 0;
 
-      for (let year = 0; year < rateArray.length; year++) {
-        const yearlyRate = rateArray[year] / 100;
-        const monthlyRate = yearlyRate / 12;
-        const monthsLeft = (rateArray.length - year) * 12;
-
-        const monthly = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -monthsLeft));
-        total += monthly * 12;
-      }
-
-      const averageMonthly = total / months;
+      const monthly = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
+      const total = monthly * months;
       const interest = total - amount;
 
-      const monthlyRounded = Math.ceil(averageMonthly);
+      const monthlyRounded = Math.ceil(monthly);
       const totalRounded = Math.ceil(total);
       const interestRounded = Math.ceil(interest);
 
       document.getElementById("result").innerHTML = `
         <h2>📊 金利モデル結果</h2>
+        <p>想定 平均金利：<strong>${averageRate.toFixed(2)}%</strong></p>
         <p>平均 月々返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
         <p>総返済額：<strong>${totalRounded.toLocaleString()} 円</strong></p>
         <p>うち利息：<strong>${interestRounded.toLocaleString()} 円</strong></p>
