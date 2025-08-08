@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（ドラッグ仕様・前3ポイント調整版）</title>
+  <title>住宅ローンシミュレーター（ドラッグ仕様統合版・万円表示）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -26,16 +26,16 @@
   </style>
 </head>
 <body onload="generateRateInputs()">
-  <h1>🏠 住宅ローンシミュレーター0809rb（前3ポイント仕様）</h1>
+  <h1>🏠 住宅ローンシミュレーター0809rb（万円表示）</h1>
 
-  <div class="section-title">借入額（円）</div>
-  <input type="text" id="amount" value="50,000,000" oninput="syncAmountFromText()" />
-  <div class="range-labels"><span>1,000万円</span><span>1億円</span></div>
-  <input type="range" id="amount-range" min="10000000" max="100000000" step="100000" value="50000000" oninput="syncAmountFromRange()" />
+  <div class="section-title">借入額（万円）</div>
+  <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
+  <div class="range-labels"><span>1000</span><span>10000</span></div>
+  <input type="range" id="amount-range" min="1000" max="10000" step="10" value="5000" oninput="syncAmountFromRange()" />
 
   <div class="section-title">返済期間（年）</div>
   <input type="number" id="years" value="35" oninput="syncYearsFromInput()" />
-  <div class="range-labels"><span>1年</span><span>50年</span></div>
+  <div class="range-labels"><span>1</span><span>50</span></div>
   <input type="range" id="years-range" min="1" max="50" step="1" value="35" oninput="syncYearsFromRange()" />
 
   <div class="section-title">返済方式</div>
@@ -56,13 +56,14 @@
   <div id="rate-inputs"></div>
 
   <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
-  <p style="font-size: 0.9rem; margin-top: -1rem; color: #444;">※点をドラッグすると「その点以降は同じ金利」「直前3ポイントだけなだらかに近づく」</p>
+  <p style="font-size: 0.9rem; margin-top: -1rem; color: #444;">※点をドラッグすると「その点以降は同じ金利」「それ以前はなだらかに近づく」</p>
   <canvas id="rateChart" height="100"></canvas>
 
   <button onclick="simulate()">シミュレーションする</button>
   <button onclick="downloadExcel()">📥 Excelダウンロード</button>
 
   <div id="result"></div>
+
   <canvas id="balanceChart" height="100"></canvas>
   <canvas id="paymentChart" height="100"></canvas>
   <canvas id="stackedChart" height="100"></canvas>
@@ -94,7 +95,7 @@
     document.getElementById('years-range').value = val;
     generateRateInputs();
   }
-  function parseAmount(v) { return parseFloat(v.replace(/,/g, '')); }
+  function parseAmount(v) { return parseFloat(v.replace(/,/g, '')) * 10000; } // 万円 → 円
 
   function generateRateInputs() {
     const container = document.getElementById('rate-inputs');
@@ -168,10 +169,9 @@
               const oldData = rateChartInstance.data.datasets[0].data;
               const newRates = [...oldData];
               const len = newRates.length;
+              const SMOOTH_PRE_RANGE = 3;
 
-              const SMOOTH_PRE_RANGE = 3; // 直前3ポイントだけ影響
               for (let i = index; i < len; i++) newRates[i] = value;
-
               const start = Math.max(0, index - SMOOTH_PRE_RANGE);
               const span = index - start;
               if (span > 0) {
@@ -180,7 +180,6 @@
                   newRates[i] = oldData[i] * (1 - t) + value * t;
                 }
               }
-
               updateInputsFromRateChart(newRates);
               rateChartInstance.data.datasets[0].data = newRates;
               rateChartInstance.update();
@@ -256,10 +255,7 @@
     thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
     data.forEach(row => {
       const tr = tbody.insertRow();
-      ['月', '元金', '利息', '支払額', '残高'].forEach(k => {
-        const td = tr.insertCell();
-        td.textContent = row[k].toLocaleString();
-      });
+      ['月', '元金', '利息', '支払額', '残高'].forEach(k => { const td = tr.insertCell(); td.textContent = row[k].toLocaleString(); });
     });
     tableWrap.appendChild(table);
   }
@@ -283,7 +279,7 @@
     });
     stackedChart = new Chart(document.getElementById('stackedChart'), {
       type: 'bar',
-      data: { labels, datasets: [{ label: '元金', data: principalData, backgroundColor: '#4CAF50' }, { label: '利息', data: interestData, backgroundColor: '#FF9800' }] },
+      data: { labels, datasets: [ { label: '元金', data: principalData, backgroundColor: '#4CAF50' }, { label: '利息', data: interestData, backgroundColor: '#FF9800' } ] },
       options: { scales: { x: { stacked: true }, y: { stacked: true } } }
     });
   }
