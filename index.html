@@ -89,12 +89,16 @@
       const total = monthly * years;
       const interest = total - amount;
 
-      document.getElementById("result").innerHTML = `
-        <h2>📊 結果</h2>
-        <p>月々の返済額：<strong>${monthly.toLocaleString()} 円</strong></p>
-        <p>総返済額：<strong>${total.toLocaleString()} 円</strong></p>
-        <p>うち利息：<strong>${interest.toLocaleString()} 円</strong></p>
-      `;
+      const monthlyRounded = Math.ceil(monthly);
+const totalRounded = Math.ceil(total);
+const interestRounded = Math.ceil(interest);
+
+document.getElementById("result").innerHTML = `
+  <h2>📊 結果</h2>
+  <p>月々の返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
+  <p>総返済額：<strong>${totalRounded.toLocaleString()} 円</strong></p>
+  <p>うち利息：<strong>${interestRounded.toLocaleString()} 円</strong></p>
+`;
     }
   </script>
 </body>
