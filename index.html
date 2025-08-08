@@ -1,153 +1,176 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>住宅ローンシミュレーター</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background: #f5f5f5;
-      max-width: 600px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-    }
-    label {
-      display: block;
-      margin-top: 1rem;
-    }
-    input {
-      padding: 0.5rem;
-      width: 100%;
-      margin-top: 0.2rem;
-    }
-    button {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      width: 100%;
-      font-size: 1.1rem;
-    }
-    #result {
-      background: #fff;
-      padding: 1rem;
-      margin-top: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .affiliate {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    .affiliate a {
-      display: inline-block;
-      background: #0044cc;
-      color: white;
-      padding: 1rem 2rem;
-      border-radius: 8px;
-      text-decoration: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>住宅ローンシミュレーター（元本推移対応）</title>
+<style>
+  body {
+    font-family: sans-serif;
+    padding: 2rem;
+    background: #f5f5f5;
+    max-width: 600px;
+    margin: auto;
+  }
+  h1 {
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin-top: 1rem;
+  }
+  input {
+    padding: 0.5rem;
+    width: 100%;
+    margin-top: 0.2rem;
+  }
+  button {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    width: 100%;
+    font-size: 1.1rem;
+  }
+  #result {
+    background: #fff;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    white-space: pre-line;
+  }
+  .affiliate {
+    margin-top: 2rem;
+    text-align: center;
+  }
+  .affiliate a {
+    display: inline-block;
+    background: #0044cc;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+</style>
 </head>
 <body>
-  <h1>🏠 住宅ローンシミュレーター</h1>
+<h1>🏠 住宅ローンシミュレーター（元本推移対応）</h1>
 
-  <label>借入額（万円）
-    <input type="number" id="amount" value="3000" />
-  </label>
+<label>借入額（万円）
+  <input type="number" id="amount" value="3000" />
+</label>
 
-  <label>金利（年利 %）
-    <input type="number" id="rate" value="1.2" step="0.01" />
-  </label>
+<label>返済期間（年）
+  <input type="number" id="years" value="35" />
+</label>
 
-  <label>返済期間（年）
-    <input type="number" id="years" value="35" />
-  </label>
+<button onclick="simulate()">シミュレーションする</button>
 
-  <button onclick="simulate()">シミュレーションする</button>
+<div style="margin-top: 1em;">
+  <p>📈 金利モデルを選択：</p>
+  <button type="button" onclick="setRateModel('optimistic')">😄 楽観モデル</button>
+  <button type="button" onclick="setRateModel('neutral')">😐 中立モデル</button>
+  <button type="button" onclick="setRateModel('pessimistic')">😨 悲観モデル</button>
+</div>
 
-  <div style="margin-top: 1em;">
-    <p>📈 金利モデルを選択：</p>
-    <button type="button" onclick="setRateModel('optimistic')">😄 楽観モデル</button>
-    <button type="button" onclick="setRateModel('neutral')">😐 中立モデル</button>
-    <button type="button" onclick="setRateModel('pessimistic')">😨 悲観モデル</button>
-  </div>
+<div id="result"></div>
 
-  <div id="result"></div>
+<div class="affiliate">
+  <!-- アフィリエイトリンクをここに！ -->
+  <a href="https://px.a8.net/svt/ejp?a8mat=YOUR-ID" target="_blank">
+    📎 住宅ローンを見直すならこちら
+  </a>
+</div>
 
-  <div class="affiliate">
-    <!-- アフィリエイトリンクをここに！ -->
-    <a href="https://px.a8.net/svt/ejp?a8mat=YOUR-ID" target="_blank">
-      📎 住宅ローンを見直すならこちら
-    </a>
-  </div>
+<script>
+  let currentRateArray = [];
 
-  <script>
-    function simulate() {
-      const amount = parseFloat(document.getElementById("amount").value) * 10000;
-      const rate = parseFloat(document.getElementById("rate").value) / 100 / 12;
-      const years = parseInt(document.getElementById("years").value) * 12;
+  // 元本推移を計算する関数
+  function simulateDetailed(amount, rateArray) {
+    const totalMonths = rateArray.length * 12;
+    let remainingPrincipal = amount;
+    let totalPaid = 0;
+    let monthlyPayments = [];
 
-      if (!amount || !rate || !years) return;
+    for (let month = 0; month < totalMonths; month++) {
+      const yearIndex = Math.floor(month / 12);
+      const annualRate = rateArray[yearIndex] / 100;
+      const monthlyRate = annualRate / 12;
 
-      const monthly = (amount * rate) / (1 - Math.pow(1 + rate, -years));
-      const total = monthly * years;
-      const interest = total - amount;
+      const monthsLeft = totalMonths - month;
 
-      const monthlyRounded = Math.ceil(monthly);
-      const totalRounded = Math.ceil(total);
-      const interestRounded = Math.ceil(interest);
+      const monthlyPayment = (remainingPrincipal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -monthsLeft));
+      const interest = remainingPrincipal * monthlyRate;
+      const principalPayment = monthlyPayment - interest;
 
-      document.getElementById("result").innerHTML = `
-        <h2>📊 結果</h2>
-        <p>月々の返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
-        <p>総返済額：<strong>${totalRounded.toLocaleString()} 円</strong></p>
-        <p>うち利息：<strong>${interestRounded.toLocaleString()} 円</strong></p>
-      `;
+      remainingPrincipal -= principalPayment;
+      if (remainingPrincipal < 0) remainingPrincipal = 0;
+
+      totalPaid += monthlyPayment;
+      monthlyPayments.push(monthlyPayment);
     }
 
-    function setRateModel(model) {
-      const years = parseInt(document.getElementById("years").value);
-      const amount = parseFloat(document.getElementById("amount").value) * 10000;
+    const totalInterest = totalPaid - amount;
+    return {
+      totalPaid,
+      totalInterest,
+      monthlyPayments,
+      remainingPrincipal
+    };
+  }
 
-      if (!amount || !years) return;
+  function simulate() {
+    const amount = parseFloat(document.getElementById("amount").value) * 10000;
+    const years = parseInt(document.getElementById("years").value);
 
-      let rates = [];
-      let baseRate = 0.8;
-      let maxRate = model === 'pessimistic' ? 3.5 : model === 'neutral' ? 2.0 : 0.8;
-      let step = model === 'pessimistic' ? 0.25 : model === 'neutral' ? 0.1 : 0.0;
+    if (!amount || !years) return;
 
-      for (let i = 0; i < years; i++) {
-        rates.push(Math.min(baseRate + step * i, maxRate));
-      }
-
-      simulateWithVariableRates(amount, rates);
+    // 金利が指定されていなければ中立モデルを使う
+    if (!currentRateArray.length || currentRateArray.length !== years) {
+      setRateModel('neutral');
+      return;
     }
 
-    // ここを平均金利計算に変更しました
-    function simulateWithVariableRates(amount, rateArray) {
-      const averageRate = rateArray.reduce((sum, r) => sum + r, 0) / rateArray.length;
-      const monthlyRate = (averageRate / 100) / 12;
-      const months = rateArray.length * 12;
+    const result = simulateDetailed(amount, currentRateArray);
 
-      const monthly = (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months));
-      const total = monthly * months;
-      const interest = total - amount;
+    const avgMonthly = result.totalPaid / (years * 12);
 
-      const monthlyRounded = Math.ceil(monthly);
-      const totalRounded = Math.ceil(total);
-      const interestRounded = Math.ceil(interest);
+    document.getElementById("result").innerHTML = `
+      <h2>📊 シミュレーション結果</h2>
+      <p>期間：<strong>${years}年（${years*12}ヶ月）</strong></p>
+      <p>借入額：<strong>${(amount).toLocaleString()} 円</strong></p>
+      <p>平均 月々返済額：<strong>${Math.ceil(avgMonthly).toLocaleString()} 円</strong></p>
+      <p>総返済額：<strong>${Math.ceil(result.totalPaid).toLocaleString()} 円</strong></p>
+      <p>うち利息：<strong>${Math.ceil(result.totalInterest).toLocaleString()} 円</strong></p>
+    `;
+  }
 
-      document.getElementById("result").innerHTML = `
-        <h2>📊 金利モデル結果</h2>
-        <p>想定 平均金利：<strong>${averageRate.toFixed(2)}%</strong></p>
-        <p>平均 月々返済額：<strong>${monthlyRounded.toLocaleString()} 円</strong></p>
-        <p>総返済額：<strong>${totalRounded.toLocaleString()} 円</strong></p>
-        <p>うち利息：<strong>${interestRounded.toLocaleString()} 円</strong></p>
-      `;
+  function setRateModel(model) {
+    const years = parseInt(document.getElementById("years").value);
+    if (!years) return;
+
+    let rates = [];
+    let baseRate = 0.8;
+    let maxRate, step;
+
+    if (model === 'pessimistic') {
+      maxRate = 3.5;
+      step = 0.25;
+    } else if (model === 'neutral') {
+      maxRate = 2.0;
+      step = 0.1;
+    } else {
+      // optimistic
+      maxRate = 0.8;
+      step = 0.0;
     }
-  </script>
+
+    for (let i = 0; i < years; i++) {
+      rates.push(Math.min(baseRate + step * i, maxRate));
+    }
+
+    currentRateArray = rates;
+    simulate();
+  }
+</script>
 </body>
 </html>
