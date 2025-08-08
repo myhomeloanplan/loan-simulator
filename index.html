@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html><html lang="ja">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>住宅ローンシミュレーター（元本推移対応）</title>
-
+<title>住宅ローンシミュレーター（半年変動＋グラフ）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body {
     font-family: sans-serif;
@@ -67,15 +66,9 @@
 </style>
 </head>
 <body>
-<h1>🏠 住宅ローンシミュレーター（元本推移対応）</h1>
+<h1>🏠 住宅ローンシミュレーター（半年変動＋グラフ）</h1><label>借入額（万円） <input type="number" id="amount" value="3000" /> </label>
 
-<label>借入額（万円）
-  <input type="number" id="amount" value="3000" />
-</label>
-
-<label>返済期間（年）
-  <input type="number" id="years" value="35" />
-</label>
+<label>返済期間（年） <input type="number" id="years" value="35" /> </label>
 
 <button onclick="simulate()">シミュレーションする</button>
 
@@ -84,107 +77,140 @@
   <button type="button" onclick="setRateModel('optimistic')">😄 楽観モデル</button>
   <button type="button" onclick="setRateModel('neutral')">😐 中立モデル</button>
   <button type="button" onclick="setRateModel('pessimistic')">😨 悲観モデル</button>
-</div>
-
-<div id="result"></div>
-
-<div class="affiliate">
-  <!-- アフィリエイトリンクをここに！ -->
+</div><div id="result"></div>
+<canvas id="chart" width="400" height="200"></canvas><div class="affiliate">
   <a href="https://px.a8.net/svt/ejp?a8mat=YOUR-ID" target="_blank">
     📎 住宅ローンを見直すならこちら
   </a>
-</div>
+</div><script>
+let currentRateArray = [];
+let chart;
 
-<script>
-  let currentRateArray = [];
+function simulateDetailed(amount, rateArray) {
+  const totalMonths = rateArray.length * 6;
+  let remainingPrincipal = amount;
+  let totalPaid = 0;
+  let monthlyPayments = [];
+  let principalHistory = [];
+  let labels = [];
 
-  // 元本推移を計算する関数
-  function simulateDetailed(amount, rateArray) {
-    const totalMonths = rateArray.length * 12;
-    let remainingPrincipal = amount;
-    let totalPaid = 0;
-    let monthlyPayments = [];
+  for (let month = 0; month < totalMonths; month++) {
+    const halfYearIndex = Math.floor(month / 6);
+    const annualRate = rateArray[halfYearIndex] / 100;
+    const monthlyRate = annualRate / 12;
+    const monthsLeft = totalMonths - month;
 
-    for (let month = 0; month < totalMonths; month++) {
-      const yearIndex = Math.floor(month / 12);
-      const annualRate = rateArray[yearIndex] / 100;
-      const monthlyRate = annualRate / 12;
+    const monthlyPayment = (remainingPrincipal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -monthsLeft));
+    const interest = remainingPrincipal * monthlyRate;
+    const principalPayment = monthlyPayment - interest;
 
-      const monthsLeft = totalMonths - month;
+    remainingPrincipal -= principalPayment;
+    if (remainingPrincipal < 0) remainingPrincipal = 0;
 
-      const monthlyPayment = (remainingPrincipal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -monthsLeft));
-      const interest = remainingPrincipal * monthlyRate;
-      const principalPayment = monthlyPayment - interest;
+    totalPaid += monthlyPayment;
+    monthlyPayments.push(monthlyPayment);
 
-      remainingPrincipal -= principalPayment;
-      if (remainingPrincipal < 0) remainingPrincipal = 0;
-
-      totalPaid += monthlyPayment;
-      monthlyPayments.push(monthlyPayment);
+    if (month % 12 === 0) {
+      principalHistory.push(Math.round(remainingPrincipal));
+      labels.push(`${Math.floor(month/12)}年目`);
     }
-
-    const totalInterest = totalPaid - amount;
-    return {
-      totalPaid,
-      totalInterest,
-      monthlyPayments,
-      remainingPrincipal
-    };
   }
 
-  function simulate() {
-    const amount = parseFloat(document.getElementById("amount").value) * 10000;
-    const years = parseInt(document.getElementById("years").value);
+  return {
+    totalPaid,
+    totalInterest: totalPaid - amount,
+    monthlyPayments,
+    principalHistory,
+    labels
+  };
+}
 
-    if (!amount || !years) return;
+function simulate() {
+  const amount = parseFloat(document.getElementById("amount").value) * 10000;
+  const years = parseInt(document.getElementById("years").value);
 
-    // 金利が指定されていなければ中立モデルを使う
-    if (!currentRateArray.length || currentRateArray.length !== years) {
-      setRateModel('neutral');
-      return;
-    }
-
-    const result = simulateDetailed(amount, currentRateArray);
-
-    const avgMonthly = result.totalPaid / (years * 12);
-
-    document.getElementById("result").innerHTML = `
-      <h2>📊 シミュレーション結果</h2>
-      <p>期間：<strong>${years}年（${years*12}ヶ月）</strong></p>
-      <p>借入額：<strong>${(amount).toLocaleString()} 円</strong></p>
-      <p>平均 月々返済額：<strong>${Math.ceil(avgMonthly).toLocaleString()} 円</strong></p>
-      <p>総返済額：<strong>${Math.ceil(result.totalPaid).toLocaleString()} 円</strong></p>
-      <p>うち利息：<strong>${Math.ceil(result.totalInterest).toLocaleString()} 円</strong></p>
-    `;
+  if (!amount || !years) return;
+  if (!currentRateArray.length || currentRateArray.length !== years * 2) {
+    setRateModel('neutral');
+    return;
   }
 
-  function setRateModel(model) {
-    const years = parseInt(document.getElementById("years").value);
-    if (!years) return;
+  const result = simulateDetailed(amount, currentRateArray);
+  const avgMonthly = result.totalPaid / (years * 12);
 
-    let rates = [];
-    let baseRate = 0.8;
-    let maxRate, step;
+  document.getElementById("result").innerHTML = `
+    <h2>📊 結果</h2>
+    <p>借入額：<strong>${amount.toLocaleString()} 円</strong></p>
+    <p>平均 月々返済額：<strong>${Math.ceil(avgMonthly).toLocaleString()} 円</strong></p>
+    <p>総返済額：<strong>${Math.ceil(result.totalPaid).toLocaleString()} 円</strong></p>
+    <p>うち利息：<strong>${Math.ceil(result.totalInterest).toLocaleString()} 円</strong></p>
+  `;
 
-    if (model === 'pessimistic') {
-      maxRate = 3.5;
-      step = 0.25;
-    } else if (model === 'neutral') {
-      maxRate = 2.0;
-      step = 0.1;
-    } else {
-      // optimistic
-      maxRate = 0.8;
-      step = 0.0;
-    }
+  drawChart(result.labels, result.principalHistory);
+}
 
-    for (let i = 0; i < years; i++) {
-      rates.push(Math.min(baseRate + step * i, maxRate));
-    }
+function setRateModel(model) {
+  const years = parseInt(document.getElementById("years").value);
+  if (!years) return;
 
-    currentRateArray = rates;
-    simulate();
+  let rates = [];
+  let baseRate = 0.8;
+  let maxRate, step;
+
+  if (model === 'pessimistic') {
+    maxRate = 3.5;
+    step = 0.125;
+  } else if (model === 'neutral') {
+    maxRate = 2.0;
+    step = 0.05;
+  } else {
+    maxRate = 0.8;
+    step = 0.0;
   }
-</script>
-</body>
+
+  const halfYears = years * 2;
+  for (let i = 0; i < halfYears; i++) {
+    rates.push(Math.min(baseRate + step * i, maxRate));
+  }
+
+  currentRateArray = rates;
+  simulate();
+}
+
+function drawChart(labels, data) {
+  const ctx = document.getElementById('chart').getContext('2d');
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '残元本の推移',
+        data: data,
+        borderColor: '#005b96',
+        backgroundColor: 'rgba(0,91,150,0.1)',
+        tension: 0.2,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value.toLocaleString() + '円';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+</script></body>
 </html>
