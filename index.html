@@ -57,7 +57,11 @@
 
 <label>返済期間（年） <input type="number" id="years" value="35" onchange="generateRateInputs()" /> </label>
 
-<div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
+<div>
+  <label>すべての期間に一括金利を設定：</label>
+  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" style="width: 40%" />
+  <button type="button" onclick="applyBulkRate()" style="width: 100%; margin-top: 0.5rem;">すべてに反映</button>
+</div><div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
 
 <div id="result"></div>
 <canvas id="chart" width="400" height="200"></canvas><script>
@@ -73,6 +77,20 @@ function generateRateInputs() {
     input.placeholder = `${Math.floor(i/2)+1}年目${i%2===0 ? '前半' : '後半'}`;
     input.id = `rate-${i}`;
     container.appendChild(input);
+  }
+}
+
+function applyBulkRate() {
+  const bulkValue = parseFloat(document.getElementById("bulk-rate").value);
+  const years = parseInt(document.getElementById("years").value);
+  const halfYears = years * 2;
+  if (isNaN(bulkValue)) {
+    alert("一括設定する金利を入力してください。");
+    return;
+  }
+  for (let i = 0; i < halfYears; i++) {
+    const field = document.getElementById(`rate-${i}`);
+    if (field) field.value = bulkValue;
   }
 }
 
