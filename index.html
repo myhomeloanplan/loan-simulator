@@ -21,7 +21,7 @@
     margin-top: 1rem;
     font-size: 1rem;
   }
-  input[type="number"] {
+  input[type="number"], input[type="text"] {
     padding: 0.5rem;
     width: 100%;
     margin-top: 0.2rem;
@@ -67,32 +67,47 @@
 </style>
 </head>
 <body onload="generateRateInputs()">
-<h1>🏠 住宅ローンシミュレーター（手動金利入力）</h1><div class="section-title">借入額</div>
+<h1>🏠 住宅ローンシミュレーター（手動金利入力）</h1>
+<p>借入額、返済期間、金利を入力して、毎月の返済額や利息、元本の推移をシミュレーションできます。
+金利は半年ごとに個別設定でき、また一括入力も可能です。返済方式も切り替えられます。</p><div class="section-title">借入額（円）</div>
 <label>
-  <input type="number" id="amount" value="3000" />
-</label><div class="section-title">返済期間</div>
+  <input type="text" id="amount" value="3,000,000" oninput="formatNumberInput(this)" />
+</label><div class="section-title">返済期間（年）</div>
 <label>
   <input type="number" id="years" value="35" onchange="generateRateInputs()" />
 </label><div class="section-title">返済方式</div>
 <label>
-  <input type="radio" name="repaymentType" value="principalEqual" checked /> 元金均等返済
+  <input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済
 </label>
 <label>
-  <input type="radio" name="repaymentType" value="principalAndInterestEqual" /> 元利均等返済
+  <input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済
 </label><div class="section-title">金利</div>
 <div>
   <label>すべての期間に一括金利を設定：</label>
-  <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.00" style="width: 40%" />
-  <button type="button" onclick="applyBulkRate()" style="width: 100%; margin-top: 0.5rem;">すべてに一括入力</button>
-</div><div>
+  <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <input type="number" id="bulk-rate" step="0.01" placeholder="例: 1.2" value="1.00" style="width: 40%" />
+    <button type="button" onclick="applyBulkRate()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">すべてに一括入力</button>
+  </div>
+</div><div style="margin-top: 1rem;">
   <label>N年目以降に一括で金利を設定：</label>
-  <select id="from-year"></select>
-  <input type="number" id="from-rate" step="0.01" placeholder="例: 1.5" style="width: 40%" />
-  <button type="button" onclick="applyRateFromYear()" style="width: 100%; margin-top: 0.5rem;">N年目以降に一括入力</button>
+  <div style="display: flex; gap: 0.5rem; align-items: center;">
+    <select id="from-year"></select>
+    <input type="number" id="from-rate" step="0.01" placeholder="例: 1.5" style="width: 40%" />
+    <button type="button" onclick="applyRateFromYear()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">N年目以降に一括入力</button>
+  </div>
 </div><div id="rate-inputs" class="rate-inputs"></div><button onclick="simulate()">シミュレーションする</button>
 
 <div id="result"></div>
 <canvas id="chart" width="400" height="200"></canvas><script>
+function formatNumberInput(input) {
+  let num = input.value.replace(/[^\d]/g, "");
+  input.value = Number(num).toLocaleString();
+}
+
+function parseAmount(value) {
+  return parseFloat(value.replace(/,/g, ""));
+}
+
 function generateRateInputs() {
   const container = document.getElementById("rate-inputs");
   container.innerHTML = "";
@@ -144,7 +159,7 @@ function applyRateFromYear() {
 }
 
 function simulate() {
-  const amount = parseFloat(document.getElementById("amount").value) * 10000;
+  const amount = parseAmount(document.getElementById("amount").value) * 1;
   const years = parseInt(document.getElementById("years").value);
   const rates = Array.from(document.querySelectorAll(".rate-input")).map(input => parseFloat(input.value));
   const months = years * 12;
