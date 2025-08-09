@@ -59,7 +59,7 @@
     input[type="range"]{ accent-color: var(--primary-2); }
 
     /* Buttons */
-    .actions{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+    .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
     .btn {
       appearance:none; border:none; cursor:pointer; font-weight:700; padding:1rem;
       border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
@@ -159,7 +159,6 @@
 
     <div class="actions">
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
-      <button class="btn btn-ghost" onclick="downloadExcel()">📥 Excelダウンロード</button>
     </div>
   </div>
 
@@ -197,6 +196,10 @@
       <span class="hint">※オフにすると軽くなります</span>
     </div>
     <div id="repayment-table"></div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="downloadExcel()">📥 シミュレーション結果をExcelで保存</button>
+    </div>
   </div>
 
   <script>
@@ -257,7 +260,7 @@
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
     if (rateChartInstance) {
-      // ラベルを「N年目」に統一
+      // ラベルは「N年目」
       rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
       rateChartInstance.data.datasets[0].data = rates;
       rateChartInstance.update();
@@ -288,11 +291,10 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（X軸: 「N年目」） =========
+  // ========= ドラッグ対応グラフ =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
-    // ここを「N年目」に変更
     const labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
 
     const ctx = document.getElementById('rateChart').getContext('2d');
@@ -498,7 +500,7 @@
           ticks: { font:axisFont }, 
           grid:{ color:'rgba(0,0,0,0.08)' },
           beginAtZero: true,
-          min: 0               // ★ 最小値を0に固定
+          min: 0
         }
       },
       plugins: { legend:{display:false} }
@@ -520,7 +522,7 @@
         scales: { 
           ...common.scales, 
           x:{ ...common.scales.x, stacked:true }, 
-          y:{ ...common.scales.y, stacked:true, beginAtZero:true, min:0 } // ★ こちらも0固定
+          y:{ ...common.scales.y, stacked:true, beginAtZero:true, min:0 }
         } 
       }
     });
