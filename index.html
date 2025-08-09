@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（軽量版・万円表示）</title>
+  <title>住宅ローンシミュレーター（軽量安定版・万円表示）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -61,32 +61,38 @@
     .btn-ghost{
       background:#eef6ff; color:#0b5585; border:1px solid #cfe3f7;
     }
+
     .kpi{
       display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;
     }
     .kpi .tile{
       background:#fff; border:1px solid #e6edf5; border-radius:12px; padding:14px;
     }
-    .kpi .label{font-size:.85rem; color:var(--muted);}
-    .kpi .value{font-weight:800; font-size:1.25rem; margin-top:4px;}
+    .kpi .label{font-size:.9rem; color:#334e68;}
+    .kpi .value{font-weight:800; font-size:1.3rem; margin-top:4px;}
     #result { white-space: pre-line; font-size: 1rem; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.9rem; }
-    th, td { border: 1px solid #e6edf5; padding: 0.55rem; text-align: right; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem; }
+    th, td { border: 1px solid #e6edf5; padding: 0.6rem; text-align: right; }
     th { background-color: #eaf4ff; font-weight:700; }
 
-    /* キャンバスの高さ：CSS固定 + Chart.jsは maintainAspectRatio:false */
-    .chart {
-      display:block;
-      width:100% !important;
-      height: 240px !important; /* デスクトップ */
+    /* === グラフはラッパーで余白＆角丸、canvasは100%描画 === */
+    .chart-wrap{
+      width:100%;
+      height: 240px;                 /* デスクトップ高さ */
       background:#fff;
       border-radius:12px;
       padding:10px;
+      overflow:hidden;
     }
-    /* スマホは半分以下（潰れ対策しつつコンパクト） */
+    .chart-wrap > canvas{
+      display:block;
+      width:100% !important;
+      height:100% !important;
+    }
+    /* スマホは半分以下 */
     @media (max-width: 640px) {
-      .chart { height: 140px !important; }
+      .chart-wrap{ height: 120px; }
     }
 
     .rate-input-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
@@ -94,7 +100,7 @@
     .rate-input-row input { width: 35%; }
     .note{font-size:.9rem;color:var(--muted); margin-top:4px}
     .row-end{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
-    .hint{font-size:.85rem; color:var(--muted);}
+    .hint{font-size:.9rem; color:#334e68;}
   </style>
 </head>
 <body onload="generateRateInputs()">
@@ -134,7 +140,7 @@
 
     <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
     <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前3ポイント（=1.5年）だけなだらかに近づく」</p>
-    <canvas id="rateChart" class="chart"></canvas>
+    <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
@@ -161,9 +167,9 @@
       </div>
     </div>
 
-    <canvas id="balanceChart" class="chart"></canvas>
-    <canvas id="paymentChart" class="chart"></canvas>
-    <canvas id="stackedChart" class="chart"></canvas>
+    <div class="chart-wrap"><canvas id="balanceChart"></canvas></div>
+    <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
+    <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
 
     <div class="row-end">
       <label class="hint"><input type="checkbox" id="toggle-table" checked> 明細テーブルを表示</label>
@@ -225,13 +231,14 @@
     drawRateChart();
   }
 
-  // ========= 入力 → グラフ反映（軽量） =========
+  // ========= 入力 → グラフ反映 =========
   function updateRateChartFromInputs() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
     if (rateChartInstance) {
+      rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年${i % 2 === 0 ? '前' : '後'}`);
       rateChartInstance.data.datasets[0].data = rates;
-      rateChartInstance.update('none'); // アニメなし更新
+      rateChartInstance.update();
     }
   }
 
@@ -259,7 +266,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（読みやすい目盛・軽量化） =========
+  // ========= ドラッグ対応グラフ（見やすい目盛） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -279,44 +286,41 @@
           backgroundColor: 'rgba(255,127,14,0.12)',
           pointRadius: 4,
           pointHoverRadius: 6,
-          pointHitRadius: 12,   // ← ドラッグしやすく
-          borderWidth: 2,
+          pointHitRadius: 14,  // ← ドラッグしやすく
+          borderWidth: 3,
           tension: 0.15
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: false,       // ← 軽量化
-        parsing: false,         // ← 軽量化
-        normalized: true,       // ← 軽量化
+        animation: false,
         scales: {
           x: {
             grid: { display: false },
             ticks: {
-              autoSkip: true,
-              autoSkipPadding: 16,
               maxRotation: 0,
-              font: { size: 12 }, // ← 見やすく
-              callback: (v, i, t) => {
-                // ラベルを間引き（約4つに1つ）
-                const total = t.length;
-                const every = Math.max(1, Math.floor(total / 12)); // 年数に応じて自動調整
-                return (i % every === 0) ? labels[i] : '';
+              font: { size: 14 },
+              callback: (value, index, ticks) => {
+                // 約12個程度に間引く（スマホだとさらに間引き）
+                const total = ticks.length;
+                const every = Math.max(1, Math.floor(total / (window.innerWidth < 640 ? 8 : 12)));
+                return (index % every === 0) ? labels[index] : '';
               }
             }
           },
           y: {
             beginAtZero: true,
             suggestedMax: 5,
+            grid: { color: 'rgba(0,0,0,0.08)' },
             ticks: {
-              font: { size: 12 },
-              callback: v => v.toFixed(1) + '%'
+              font: { size: 14 },
+              callback: v => Number(v).toFixed(1) + '%'
             }
           }
         },
         plugins: {
-          legend: { display: false }, // ← 軽量化
+          legend: { display: false },
           tooltip: {
             callbacks: {
               title: ctx => labels[ctx[0].dataIndex],
@@ -345,7 +349,7 @@
               }
               updateInputsFromRateChart(newRates);
               rateChartInstance.data.datasets[0].data = newRates;
-              rateChartInstance.update('none');
+              rateChartInstance.update();
             }
           }
         }
@@ -423,13 +427,13 @@
     const div = document.getElementById('result');
     div.innerHTML = `🏁 総返済額: ${totalRepayment.toLocaleString()} 円\n📊 総利息: ${interestRounded.toLocaleString()} 円`;
 
-    // KPIタイル表示
+    // KPIタイル
     document.getElementById('kpiTiles').style.display = 'grid';
     document.getElementById('kpi-first').textContent = `${firstPay.toLocaleString()} 円`;
     document.getElementById('kpi-avg').textContent   = `${avgPay.toLocaleString()} 円`;
     document.getElementById('kpi-max').textContent   = `${maxPay.toLocaleString()} 円`;
 
-    // 明細テーブル（必要な時だけ生成）
+    // 明細テーブル（必要時のみ）
     const showTable = document.getElementById('toggle-table').checked;
     const tableWrap = document.getElementById('repayment-table');
     tableWrap.innerHTML = '';
@@ -438,7 +442,6 @@
       const thead = table.createTHead();
       const tbody = table.createTBody();
       thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
-      // 直接ループ生成（軽量）
       for (let i=0;i<data.length;i++){
         const row = data[i];
         const tr = tbody.insertRow();
@@ -452,7 +455,7 @@
     }
   }
 
-  // ========= グラフ描画（軽量設定） =========
+  // ========= グラフ描画 =========
   function drawCharts(data) {
     const labels = data.map(d => d['月']);
     const principalData = data.map(d => d['元金']);
@@ -464,30 +467,29 @@
     if (paymentChart) paymentChart.destroy();
     if (stackedChart) stackedChart.destroy();
 
+    const axisFont = { size: 14 };
     const common = {
       responsive:true,
       maintainAspectRatio:false,
       animation:false,
-      parsing:false,
-      normalized:true,
       scales: {
-        x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:{size:12} }, grid:{display:false} },
-        y: { ticks: { font:{size:12} } }
+        x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:axisFont }, grid:{display:false} },
+        y: { ticks: { font:axisFont }, grid:{ color:'rgba(0,0,0,0.08)'} }
       },
       plugins: { legend:{display:false} }
     };
 
-    balanceChart = new Chart(document.getElementById('balanceChart'), {
+    balanceChart = new Chart(document.getElementById('balanceChart').getContext('2d'), {
       type: 'line',
-      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', borderWidth:2, pointRadius:0 }] },
+      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', borderWidth:3, pointRadius:0 }] },
       options: common
     });
-    paymentChart = new Chart(document.getElementById('paymentChart'), {
+    paymentChart = new Chart(document.getElementById('paymentChart').getContext('2d'), {
       type: 'bar',
       data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
       options: common
     });
-    stackedChart = new Chart(document.getElementById('stackedChart'), {
+    stackedChart = new Chart(document.getElementById('stackedChart').getContext('2d'), {
       type: 'bar',
       data: { labels, datasets: [
         { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
@@ -506,16 +508,13 @@
     XLSX.writeFile(wb, 'loan_simulation.xlsx');
   }
 
-  // テーブル表示トグル時は再描画だけ（計算は不要）
+  // テーブル表示トグル時は再描画のみ
   document.addEventListener('change', (e)=>{
     if (e.target && e.target.id === 'toggle-table' && lastSimData.length){
-      // 直近結果で表示/非表示切り替え
-      const monthsData = lastSimData;
-      // totalは保持していないので最小限再集計
       let totalPrincipal=0,totalInterest=0;
-      for(const r of monthsData){ totalPrincipal+=r['元金']; totalInterest+=r['利息']; }
-      const payments = monthsData.map(r=>r['支払額']);
-      displayResult(monthsData, totalPrincipal, totalInterest, payments);
+      for(const r of lastSimData){ totalPrincipal+=r['元金']; totalInterest+=r['利息']; }
+      const payments = lastSimData.map(r=>r['支払額']);
+      displayResult(lastSimData, totalPrincipal, totalInterest, payments);
     }
   });
   </script>
