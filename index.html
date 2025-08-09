@@ -15,6 +15,7 @@
       --card:#ffffff;
       --muted:#5b6b7a;
       --ring:rgba(0,91,150,.25);
+      --title:#0b5585;
     }
     *{box-sizing:border-box}
     body {
@@ -27,6 +28,7 @@
       color:#102a43;
     }
     h1 { text-align: center; margin-top: 4px; }
+
     .card {
       background: var(--card);
       border-radius: 14px;
@@ -34,7 +36,17 @@
       padding: 18px;
       margin-top: 16px;
     }
-    .section-title { font-weight: 700; font-size: 20px; margin-top: 22px; }
+    /* セクション見出し（条件 / シミュレーション結果）を同じデザインに */
+    .panel-title{
+      display:flex; align-items:center; gap:.6rem;
+      font-weight:800; font-size:22px; color:var(--title); margin:2px 0 10px;
+    }
+    .panel-title::before{
+      content:""; width:10px; height:10px; border-radius:2px; background:linear-gradient(135deg,var(--primary-2),var(--primary));
+      box-shadow:0 0 0 4px rgba(0,91,150,.12);
+    }
+
+    .section-title { font-weight: 700; font-size: 18px; margin-top: 18px; }
     .range-labels { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 6px 0 8px; color:var(--muted); }
     .inline-group { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
     input[type="number"], input[type="text"], input[type="range"], select {
@@ -76,7 +88,9 @@
     th, td { border: 1px solid #e6edf5; padding: 0.6rem; text-align: right; }
     th { background-color: #eaf4ff; font-weight:700; }
 
-    /* === グラフはラッパーで余白＆角丸、canvasは100%描画 === */
+    /* グラフはラッパーで余白＆角丸、canvasは100%描画 */
+    .chart-block{ margin-top:14px; }
+    .chart-title{ font-size: 16px; font-weight:700; color:#2b455c; margin: 6px 4px; }
     .chart-wrap{
       width:100%;
       height: 240px;                 /* デスクトップ高さ */
@@ -106,7 +120,10 @@
 <body onload="generateRateInputs()">
   <h1>🏠 住宅ローンシミュレーター</h1>
 
+  <!-- 条件 -->
   <div class="card">
+    <div class="panel-title">条件</div>
+
     <div class="section-title">借入額（万円）</div>
     <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
     <div class="range-labels"><span>1000</span><span>10000</span></div>
@@ -122,9 +139,7 @@
       <label><input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済</label>
       <label><input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済</label>
     </div>
-  </div>
 
-  <div class="card">
     <div class="section-title">金利（半年ごと）</div>
     <div class="inline-group">
       <input type="number" id="bulk-rate" step="0.01" value="1.00" />
@@ -148,8 +163,9 @@
     </div>
   </div>
 
+  <!-- シミュレーション結果 -->
   <div class="card">
-    <div class="section-title">シミュレーション結果</div>
+    <div class="panel-title">シミュレーション結果</div>
     <div id="result"></div>
 
     <div class="kpi" id="kpiTiles" style="display:none;">
@@ -167,9 +183,14 @@
       </div>
     </div>
 
-    <div class="chart-wrap"><canvas id="balanceChart"></canvas></div>
-    <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
-    <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
+    <div class="chart-block">
+      <div class="chart-title">月々の支払額</div>
+      <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">支払内訳（元金/利息）</div>
+      <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
+    </div>
 
     <div class="row-end">
       <label class="hint"><input type="checkbox" id="toggle-table" checked> 明細テーブルを表示</label>
@@ -182,7 +203,7 @@
   // ========= グローバル =========
   let lastSimData = [];
   let rateChartInstance = null;
-  let balanceChart = null, paymentChart = null, stackedChart = null;
+  let paymentChart = null, stackedChart = null;
 
   // ========= 入出力同期（万円） =========
   function syncAmountFromRange() {
@@ -236,7 +257,8 @@
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
     if (rateChartInstance) {
-      rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年${i % 2 === 0 ? '前' : '後'}`);
+      // ラベルを「N年目」に統一
+      rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
       rateChartInstance.data.datasets[0].data = rates;
       rateChartInstance.update();
     }
@@ -266,11 +288,12 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（見やすい目盛） =========
+  // ========= ドラッグ対応グラフ（X軸: 「N年目」） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
-    const labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年${i % 2 === 0 ? '前' : '後'}`);
+    // ここを「N年目」に変更
+    const labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
 
     const ctx = document.getElementById('rateChart').getContext('2d');
     if (rateChartInstance) rateChartInstance.destroy();
@@ -286,7 +309,7 @@
           backgroundColor: 'rgba(255,127,14,0.12)',
           pointRadius: 4,
           pointHoverRadius: 6,
-          pointHitRadius: 14,  // ← ドラッグしやすく
+          pointHitRadius: 14,
           borderWidth: 3,
           tension: 0.15
         }]
@@ -302,7 +325,6 @@
               maxRotation: 0,
               font: { size: 14 },
               callback: (value, index, ticks) => {
-                // 約12個程度に間引く（スマホだとさらに間引き）
                 const total = ticks.length;
                 const every = Math.max(1, Math.floor(total / (window.innerWidth < 640 ? 8 : 12)));
                 return (index % every === 0) ? labels[index] : '';
@@ -455,15 +477,13 @@
     }
   }
 
-  // ========= グラフ描画 =========
+  // ========= グラフ描画（下2つ：Y軸の最小値を0に固定） =========
   function drawCharts(data) {
     const labels = data.map(d => d['月']);
     const principalData = data.map(d => d['元金']);
     const interestData = data.map(d => d['利息']);
-    const balanceData = data.map(d => d['残高']);
     const paymentData = data.map(d => d['支払額']);
 
-    if (balanceChart) balanceChart.destroy();
     if (paymentChart) paymentChart.destroy();
     if (stackedChart) stackedChart.destroy();
 
@@ -474,16 +494,16 @@
       animation:false,
       scales: {
         x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:axisFont }, grid:{display:false} },
-        y: { ticks: { font:axisFont }, grid:{ color:'rgba(0,0,0,0.08)'} }
+        y: { 
+          ticks: { font:axisFont }, 
+          grid:{ color:'rgba(0,0,0,0.08)' },
+          beginAtZero: true,
+          min: 0               // ★ 最小値を0に固定
+        }
       },
       plugins: { legend:{display:false} }
     };
 
-    balanceChart = new Chart(document.getElementById('balanceChart').getContext('2d'), {
-      type: 'line',
-      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', borderWidth:3, pointRadius:0 }] },
-      options: common
-    });
     paymentChart = new Chart(document.getElementById('paymentChart').getContext('2d'), {
       type: 'bar',
       data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
@@ -495,7 +515,14 @@
         { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
         { label: '利息', data: interestData, backgroundColor: '#FF9800' }
       ] },
-      options: { ...common, scales: { ...common.scales, x:{ ...common.scales.x, stacked:true }, y:{ ...common.scales.y, stacked:true } } }
+      options: { 
+        ...common, 
+        scales: { 
+          ...common.scales, 
+          x:{ ...common.scales.x, stacked:true }, 
+          y:{ ...common.scales.y, stacked:true, beginAtZero:true, min:0 } // ★ こちらも0固定
+        } 
+      }
     });
   }
 
