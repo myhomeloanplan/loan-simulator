@@ -60,7 +60,7 @@
   <!-- 変動金利のルール（オプション） -->
   <div class="section-title">変動金利オプション（元利均等に適用）</div>
   <div class="inline-group">
-    <label><input type="checkbox" id="fiveYearRule" checked /> 5年ルール（返済額は5年間据え置き、60カ月ごとに見直し）</label>
+    <label><input type="checkbox" id="fiveYearRule" checked /> 5年ルール（返済額は5年間据え置き、金利改定から60カ月固定）</label>
     <label><input type="checkbox" id="cap125Rule" checked /> 125%ルール（見直し時の返済額は直前の1.25倍まで）</label>
   </div>
   <p class="note">※オフにすると、毎月その時点の金利で返済額を再計算します（従来動作）。</p>
@@ -249,46 +249,55 @@
     const result = [];
     let totalPrincipal = 0, totalInterest = 0;
 
+    // 5年ルール用：支払額の固定期間管理
     let currentPayment = null;      // 現在の毎月返済額（元利均等の場合）
     let lastResetPayment = null;    // 直前の見直しで確定した返済額（125%上限の基準）
+    let lastResetMonth = -1;        // 直近の「固定開始」月
+    let prevAnnualRate = null;      // 前月の適用年利（基点判定）
 
     for (let m = 0; m < months; m++) {
       const rateIdx = Math.floor(m / 6);
       const annualRate = halfRates[rateIdx] || 0; // 年利(小数)
       const r = annualRate / 12;                  // 月利
 
+      // ---- 見直し判定（5年ルール：金利が変わった月 or 直近リセットから60ヶ月経過）----
+      let isResetMonth;
+      if (repaymentType !== 'principalAndInterestEqual') {
+        // 元金均等はルール対象外
+        isResetMonth = true;
+      } else if (!fiveYearRule) {
+        // ルールなし：毎月リセット（従来動作）
+        isResetMonth = true;
+      } else {
+        const rateChangedThisMonth = (prevAnnualRate === null) ? true : (annualRate !== prevAnnualRate);
+        const overFiveYears = (lastResetMonth >= 0) ? (m - lastResetMonth >= 60) : false;
+
+        // 基本：金利が変わった月を基点に即リセットして、そこから60ヶ月固定
+        isResetMonth = (m === 0) || rateChangedThisMonth || overFiveYears;
+      }
+
+      // ---- 支払額の確定（元利均等）----
       let interest = balance * r;
       let principal, paymentOut;
 
       if (repaymentType === 'principalAndInterestEqual') {
-        // ---- 5年ルール／従来動作の分岐（修正版）----
-        let isResetMonth;
-        if (fiveYearRule) {
-          // 初月と60カ月ごとだけ見直し
-          isResetMonth = (m === 0 || (m % 60 === 0 && m > 0));
-        } else {
-          // 従来動作：毎月見直し
-          isResetMonth = true;
-        }
-
         if (isResetMonth) {
           const remain = months - m;
-          // 元利均等の理論返済額（残期間＆当月金利ベース）
           let newPayment = (r > 0)
             ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
             : balance / remain;
 
-          // 125%ルール：5年見直し時のみ上限を適用
-          if (fiveYearRule && m > 0 && cap125Rule && lastResetPayment != null) {
+          // 125%ルールは「リセット月」にだけ適用
+          if (fiveYearRule && lastResetPayment != null && m > 0 && cap125Rule) {
             const cap = lastResetPayment * 1.25;
             if (newPayment > cap) newPayment = cap;
           }
 
           currentPayment = newPayment;
-          lastResetPayment = currentPayment; // 次回の上限基準
+          lastResetPayment = currentPayment;
+          lastResetMonth = m; // この月から60ヶ月固定
         }
 
-        // 今月の支払内訳
         paymentOut = currentPayment;
         interest = balance * r;
         principal = paymentOut - interest;
@@ -313,6 +322,9 @@
         残高: Math.round(balance),
         支払額: Math.round(paymentOut)
       });
+
+      // 次月用に前月金利用を更新
+      prevAnnualRate = annualRate;
     }
 
     lastSimData = result;
@@ -349,7 +361,6 @@
     const paymentData = data.map(d => d['支払額']);
 
     if (balanceChart) balanceChart.destroy();
-    if (paymentChart) balanceChart = null;
     if (paymentChart) paymentChart.destroy();
     if (stackedChart) stackedChart.destroy();
 
