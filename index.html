@@ -126,7 +126,7 @@
     .rate-input-row span{ width:20%; font-size:.95rem; color:var(--muted);}
     .rate-input-row input{ width:35%; }
 
-    /* 一括入力ツールバー */
+    /* 一括入力ツールバー（モバイルでも収まる） */
     .rate-toolbar{
       display:grid;
       grid-template-columns: 1fr auto auto;
@@ -139,20 +139,21 @@
       .rate-toolbar .btn-compact{ grid-column: 1 / -1; }
     }
     .rate-field{
-      display:flex; align-items:center; gap:6px;
+      display:flex; align-items:center; gap:8px;
       background:#fff; border:1px solid #dfe8f2; border-radius:12px;
-      padding:6px 8px; position:relative;
+      padding:6px 8px; min-width:0;
     }
     .rate-field .unit{ color:#5f6f84; font-weight:700; margin-left:2px; }
     .rate-field input{
-      width:90px; text-align:right; border:none; outline:none; font-weight:800;
-      font-size:1rem; padding:.4rem .2rem; border-radius:8px;
+      width:84px; text-align:right; border:none; outline:none; font-weight:800;
+      font-size:1rem; padding:.4rem .2rem; border-radius:8px; flex:0 0 auto;
     }
-    .chip-btn{
-      border:none; cursor:pointer; padding:.35rem .55rem; border-radius:999px;
-      background:#e9f7f8; color:#0c7e86; font-weight:800;
+    .icon-btn{
+      border:none; background:#e9f7f8; color:#0c7e86; width:36px; height:36px; border-radius:10px;
+      display:inline-flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.05);
     }
-    .chip-btn:active{ transform:translateY(1px); }
+    .icon-btn:active{ transform:translateY(1px); }
     .scope-field{ display:flex; align-items:center; gap:8px; }
     .scope-field select{
       padding:.6rem .7rem; border-radius:12px; border:1px solid #dfe8f2; background:#fff;
@@ -202,13 +203,10 @@
     <!-- コンパクト一括入力ツールバー -->
     <div class="rate-toolbar">
       <div class="rate-field">
-        <label class="sr-only" for="bulkRateUnified">金利</label>
-        <button type="button" class="chip-btn" onclick="nudgeRate(-0.10)">−0.10</button>
-        <button type="button" class="chip-btn" onclick="nudgeRate(-0.05)">−0.05</button>
-        <input type="number" id="bulkRateUnified" step="0.01" value="1.00" />
-        <button type="button" class="chip-btn" onclick="nudgeRate(0.05)">+0.05</button>
-        <button type="button" class="chip-btn" onclick="nudgeRate(0.10)">+0.10</button>
+        <button type="button" class="icon-btn" aria-label="金利を0.05下げる" onclick="adjustRate(-0.05)">−</button>
+        <input type="number" id="bulkRateUnified" step="0.01" value="1.20" />
         <span class="unit">%</span>
+        <button type="button" class="icon-btn" aria-label="金利を0.05上げる" onclick="adjustRate(0.05)">＋</button>
       </div>
 
       <div class="scope-field">
@@ -277,7 +275,7 @@
   }
   function syncAmountFromText() {
     const raw = document.getElementById('amount').value.replace(/[^\d]/g, '');
-    aNum = parseInt(raw || '0');
+    const aNum = parseInt(raw || '0');
     document.getElementById('amount-range').value = aNum;
     document.getElementById('amount').value = aNum.toLocaleString();
   }
@@ -317,7 +315,7 @@
       const label = document.createElement('span'); label.textContent = `${y}年目`;
       const input1 = document.createElement('input'); const input2 = document.createElement('input');
       [input1, input2].forEach((input, i) => {
-        input.type = 'number'; input.step = '0.01'; input.value = '1.00'; input.className = 'rate-input';
+        input.type = 'number'; input.step = '0.01'; input.value = '1.20'; input.className = 'rate-input';
         input.dataset.index = (y - 1) * 2 + i; input.addEventListener('input', updateRateChartFromInputs);
       });
       row.appendChild(label); row.appendChild(input1); row.appendChild(input2); container.appendChild(row);
@@ -344,10 +342,11 @@
   }
 
   // ========= 一括入力ツールバー =========
-  function nudgeRate(delta){
+  function clamp06(v){ return Math.max(0, Math.min(6, v)); }
+  function adjustRate(delta){
     const el = document.getElementById('bulkRateUnified');
     let v = parseFloat(el.value || '0');
-    v = Math.max(0, Math.min(6, (Math.round((v + delta)*100)/100)));
+    v = clamp06(Math.round((v + delta)*100)/100);
     el.value = v.toFixed(2);
   }
   function applyRateUnified(){
