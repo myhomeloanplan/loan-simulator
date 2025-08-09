@@ -70,19 +70,33 @@
     .kpi .label{font-size:.85rem; color:var(--muted);}
     .kpi .value{font-weight:800; font-size:1.25rem; margin-top:4px;}
     #result { white-space: pre-line; font-size: 1rem; }
+
     table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.9rem; }
     th, td { border: 1px solid #e6edf5; padding: 0.55rem; text-align: right; }
     th { background-color: #eaf4ff; font-weight:700; }
-    canvas { margin-top: 16px; background:#fff; border-radius:12px; padding:10px; }
+
+    /* キャンバスの高さ：CSSで固定し、Chart.jsは maintainAspectRatio:false に */
+    .chart {
+      display:block;
+      width:100% !important;
+      height: 280px !important; /* デスクトップ標準 */
+      background:#fff;
+      border-radius:12px;
+      padding:10px;
+    }
+    /* スマホはむしろ高さを増やす（潰れ対策） */
+    @media (max-width: 640px) {
+      .chart { height: 340px !important; }
+    }
+
     .rate-input-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
     .rate-input-row span { width: 20%; font-size: 0.95rem; color:var(--muted); }
     .rate-input-row input { width: 35%; }
     .note{font-size:.9rem;color:var(--muted); margin-top:4px}
-    .pill{display:inline-block; font-size:.8rem; padding:.25rem .6rem; border-radius:999px; background:#eef6ff; color:#0b5585; border:1px solid #cfe3f7}
   </style>
 </head>
 <body onload="generateRateInputs()">
-  <h1>🏠 住宅ローンシミュレーター<span class="pill" style="margin-left:.5rem;">ルールなし</span></h1>
+  <h1>🏠 住宅ローンシミュレーター</h1>
 
   <div class="card">
     <div class="section-title">借入額（万円）</div>
@@ -118,7 +132,7 @@
 
     <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
     <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前3ポイント（=1.5年）だけなだらかに近づく」</p>
-    <canvas id="rateChart" height="100"></canvas>
+    <canvas id="rateChart" class="chart"></canvas>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
@@ -127,7 +141,9 @@
   </div>
 
   <div class="card">
+    <div class="section-title">シミュレーション結果</div>
     <div id="result"></div>
+
     <div class="kpi" id="kpiTiles" style="display:none;">
       <div class="tile">
         <div class="label">初月の月々返済額</div>
@@ -143,9 +159,9 @@
       </div>
     </div>
 
-    <canvas id="balanceChart" height="96"></canvas>
-    <canvas id="paymentChart" height="96"></canvas>
-    <canvas id="stackedChart" height="96"></canvas>
+    <canvas id="balanceChart" class="chart"></canvas>
+    <canvas id="paymentChart" class="chart"></canvas>
+    <canvas id="stackedChart" class="chart"></canvas>
 
     <div id="repayment-table"></div>
   </div>
@@ -248,6 +264,7 @@
       data: { labels, datasets: [{ label: '半年ごとの金利（％）', data: rates, borderColor: '#ff7f0e', backgroundColor: 'rgba(255,127,14,0.2)', pointRadius: 6, pointHoverRadius: 8 }] },
       options: {
         responsive: true,
+        maintainAspectRatio: false,   // ← CSSの高さを優先
         scales: { y: { beginAtZero: true, suggestedMax: 5, ticks: { callback: v => v.toFixed(2) + '%' } } },
         plugins: {
           dragData: {
@@ -384,11 +401,13 @@
 
     balanceChart = new Chart(document.getElementById('balanceChart'), {
       type: 'line',
-      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', fill: false }] }
+      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', fill: false }] },
+      options: { responsive:true, maintainAspectRatio:false }
     });
     paymentChart = new Chart(document.getElementById('paymentChart'), {
       type: 'bar',
-      data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] }
+      data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
+      options: { responsive:true, maintainAspectRatio:false }
     });
     stackedChart = new Chart(document.getElementById('stackedChart'), {
       type: 'bar',
@@ -396,7 +415,7 @@
         { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
         { label: '利息', data: interestData, backgroundColor: '#FF9800' }
       ] },
-      options: { scales: { x: { stacked: true }, y: { stacked: true } } }
+      options: { responsive:true, maintainAspectRatio:false, scales: { x: { stacked: true }, y: { stacked: true } } }
     });
   }
 
