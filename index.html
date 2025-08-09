@@ -86,8 +86,9 @@
     @media (max-width:640px){ .rate-toolbar{ grid-template-columns: 1fr 1fr; } .rate-toolbar .btn-compact{ grid-column:1/-1; } }
 
     .rate-field{
-      display:grid; grid-template-columns: 36px minmax(52px,70px) 18px 36px; align-items:center;
-      gap:4px; background:#fff; border:1px solid #dfe8f2; border-radius:12px; padding:6px 8px; width:max-content; max-width:100%;
+      display:grid; grid-template-columns: 36px minmax(60px,84px) 18px 36px; /* 数字欄を少し広く */
+  align-items:center;
+  gap:4px; background:#fff; border:1px solid #dfe8f2; border-radius:12px; padding:6px 8px; width:max-content; max-width:100%;
     }
     .icon-btn{
       width:36px; height:36px; border:none; background:#e9f7f8; color:#0c7e86; border-radius:10px;
@@ -96,8 +97,9 @@
     }
     .icon-btn:active{ transform:translateY(1px); }
     .rate-input{
-      width:70px; text-align:right; border:none; outline:none; font-weight:800; font-size:1rem;
-      padding:.4rem .2rem; border-radius:8px; background:transparent;
+      width:84px; /* 70px → 84px に拡大 */
+  text-align:right; border:none; outline:none; font-weight:800; font-size:1rem;
+  padding:.4rem .2rem; border-radius:8px; background:transparent;
     }
     .rate-suffix{ font-weight:800; color:#0c7e86; text-align:center; user-select:none; }
     @media (max-width:480px){
@@ -112,7 +114,10 @@
     }
     .btn-compact{
       color:#fff; background:linear-gradient(135deg,#0c7e86,#10939a); border:1px solid rgba(0,0,0,.08);
-      box-shadow:0 8px 18px rgba(12,126,134,.28); padding:.7rem 1rem; border-radius:12px; display:inline-flex; gap:.5rem; align-items:center; font-weight:900;
+  box-shadow:0 8px 18px rgba(12,126,134,.28);
+  padding:.7rem 1rem
+  border-radius:10px;
+  display:inline-flex; gap:.4rem; align-items:center; font-weight:900;
     }
     .btn-compact:hover{ filter:brightness(1.05); } .btn-compact:active{ transform:translateY(1px); }
   </style>
