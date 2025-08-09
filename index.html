@@ -12,17 +12,19 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     :root{
-      /* 青×黄ベースを少し濃く */
       --navy:#0e2a47;
       --teal:#10939a;
       --teal-2:#0c7e86;
       --yellow:#ffbf3a;
-      --yellow-2:#f29f05;
+      --yellow-2:#ffe28f;
       --bg:#f7fafc;
       --card:#ffffff;
       --muted:#5f6f84;
       --ring:rgba(16,147,154,.25);
       --line:#e6edf5;
+      /* 目立つボタン色（コーラル系） */
+      --coral:#ff4d6d;
+      --coral-2:#ff6b81;
     }
     *{box-sizing:border-box}
     body{
@@ -32,16 +34,17 @@
                         radial-gradient(ellipse at 110% 10%, rgba(25,183,181,.08), transparent 40%);
     }
 
-    /* タイトル（家アイコン削除＋キャッチコピー） */
+    /* タイトルエリア */
     .title-wrap{ text-align:center; margin:6px 0 10px;}
-    .title{ margin:0; color:var(--navy); font-weight:900; letter-spacing:.02em; font-size:clamp(22px,4.5vw,32px);}
+    /* サブタイトルを“上”に。黄色ハイライト風（背景になじむ） */
     .subtitle{
-      display:inline-block; margin-top:6px; font-weight:800; color:#0d3a57; letter-spacing:.08em;
-      background:linear-gradient(90deg, #fff3c4, #ffe08a);
-      padding:.3rem .75rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
+      display:inline-block; margin-bottom:8px; font-weight:800; color:#0d3a57; letter-spacing:.08em;
+      background:linear-gradient(0deg, #fff3c4 0%, #fff3c4 100%);
+      padding:.25rem .65rem; border-radius:6px; border:1px solid rgba(0,0,0,.06);
     }
     .subtitle::before{ content:"＼ "; }
     .subtitle::after{ content:" ／"; }
+    .title{ margin:0; color:var(--navy); font-weight:900; letter-spacing:.02em; font-size:clamp(22px,4.5vw,32px);}
 
     .card{
       background:var(--card); border-radius:16px; padding:18px; margin-top:16px;
@@ -52,7 +55,7 @@
     /* ピル型見出し（①条件 / ②シミュレーション結果） */
     .panel-title{
       display:inline-flex; align-items:center; gap:.5rem; margin:-6px 0 14px; font-weight:900; color:var(--navy);
-      background:linear-gradient(90deg, var(--yellow), #ffe28f);
+      background:linear-gradient(90deg, var(--yellow), var(--yellow-2));
       padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
       box-shadow: 0 4px 0 rgba(15,48,87,.08);
       font-size: 18px;
@@ -83,24 +86,25 @@
     }
     input[type="range"]{ accent-color: var(--teal-2); }
 
-    /* Buttons（フォント＋2pt & 色濃く） */
+    /* Buttons（フォント＋2pt） */
     .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
     .btn{
       appearance:none; border:none; cursor:pointer; font-weight:900; letter-spacing:.02em;
       padding:1rem; border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
-      font-size: calc(1rem + 2pt);  /* ★文字サイズ+2pt */
+      font-size: calc(1rem + 2pt);
     }
     .btn:active{ transform: translateY(1px); }
+    /* 目立つコーラル色に変更 */
     .btn-primary{
-      color:#0b243a;
-      background: linear-gradient(135deg, var(--yellow), var(--yellow-2)); /* ★濃いめ */
+      color:#fff;
+      background: linear-gradient(135deg, var(--coral), var(--coral-2));
       border:1px solid rgba(0,0,0,.12);
-      box-shadow: 0 8px 18px rgba(242,159,5,.35);
+      box-shadow: 0 10px 22px rgba(255,77,109,.35);
     }
-    .btn-primary:hover{ filter:brightness(1.03); }
+    .btn-primary:hover{ filter:brightness(1.05); }
     .btn-ghost{
-      background: linear-gradient(135deg,#cfeff1,#a6e4e6); /* ★濃いめ */
-      color:#083b40; border:1px solid #7fd6d8; box-shadow: 0 4px 10px rgba(13,126,134,.18);
+      background: linear-gradient(135deg,#bfe8ea,#8fdde0);
+      color:#083b40; border:1px solid #6fd0d3; box-shadow: 0 4px 10px rgba(13,126,134,.18);
     }
 
     .kpi{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;}
@@ -135,15 +139,15 @@
 </head>
 <body onload="generateRateInputs()">
   <div class="title-wrap">
-    <h1 class="title">住宅ローンシミュレーター</h1>
     <div class="subtitle">金利の変動に対応</div>
+    <h1 class="title">住宅ローンシミュレーター</h1>
   </div>
 
   <!-- 条件 -->
   <div class="card">
     <div class="panel-title"><span class="chip">1</span>条件</div>
 
-    <!-- ※「借入額（万円）」はパネルの“下”に配置 -->
+    <!-- ★「借入額（万円）」はパネル見出しの“下”に配置 -->
     <div class="section-title">借入額（万円）</div>
     <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
     <!-- 目盛り表示を 1,000万円 / 2億円 -->
@@ -162,7 +166,7 @@
       <label><input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済</label>
     </div>
 
-    <!-- 見出し名を「金利（％）」へ -->
+    <!-- 見出し名：金利（％） -->
     <div class="section-title">金利（％）</div>
     <div class="inline-group">
       <input type="number" id="bulk-rate" step="0.01" value="1.00" />
@@ -181,6 +185,7 @@
     <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
     <div class="actions">
+      <!-- ★目立つコーラル色に変更 -->
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
     </div>
   </div>
@@ -304,7 +309,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（X軸は1年置きの数値・軸ラベル追加／Y最大8%） =========
+  // ========= ドラッグ対応グラフ（X軸=1年置きの数値・軸ラベル／Y最大8%） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -315,7 +320,6 @@
     rateChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
-        // ラベル自体は内部管理に使用（表示はticks.callbackで制御）
         labels: rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`),
         datasets: [{
           label: '半年ごとの金利（％）',
@@ -336,13 +340,13 @@
         scales: {
           x: {
             grid: { display: false },
-            title: { display: true, text: '何年目', color:'#0e2a47', font:{weight:'bold'} }, // ★軸ラベル
+            title: { display: true, text: '何年目', color:'#0e2a47', font:{weight:'bold'} },
             ticks: {
-              autoSkip: false,               // ★1年置きに自前で出す
+              autoSkip: false,
               maxRotation: 0,
               font: { size: 14 },
               callback: (value, index) => {
-                // データは半年ごと。1年ごと（2点ごと）に「1,2,3…」を表示
+                // 1年ごと（2点ごと）に「1,2,3…」を表示
                 if (index % 2 === 1) return Math.floor(index / 2) + 1;
                 return '';
               }
@@ -351,7 +355,7 @@
           y: {
             beginAtZero: true,
             min: 0,
-            max: 8,                          // ★最大8%
+            max: 8, /* 最大8% */
             grid: { color: 'rgba(0,0,0,0.08)' },
             ticks: { font: { size: 14 }, callback: v => Number(v).toFixed(1) + '%' }
           }
@@ -372,17 +376,16 @@
             round: 2,
             showTooltip: true,
             onDragEnd: function (e, datasetIndex, index, value) {
-              // 値を0〜8%にクランプ
+              // 0〜8%にクランプ
               value = Math.max(0, Math.min(8, value));
-
               const oldData = rateChartInstance.data.datasets[0].data;
               const newRates = [...oldData];
               const len = newRates.length;
-              const SMOOTH_PRE_RANGE = 3; // 直前3ポイント（=1.5年）
+              const SMOOTH_PRE_RANGE = 3; // 直前3ポイント
 
-              // 以降を同じ値に固定
+              // 以降は同じ値
               for (let i = index; i < len; i++) newRates[i] = value;
-              // 直前3ポイントだけ線形でなだらかに
+              // 直前だけなだらかに
               const start = Math.max(0, index - SMOOTH_PRE_RANGE);
               const span = index - start;
               if (span > 0) {
@@ -420,15 +423,14 @@
 
     for (let m = 0; m < months; m++) {
       const rateIdx = Math.floor(m / 6);
-      const annualRate = rates[rateIdx] || 0;      // 年利(小数)
-      const r = annualRate / 12;                   // 月利
+      const annualRate = rates[rateIdx] || 0;
+      const r = annualRate / 12;
       const remain = months - m;
 
       let interest = balance * r;
       let principal, paymentOut;
 
       if (repaymentType === 'principalAndInterestEqual') {
-        // 毎月その時点の金利＆残期間で理論返済額を再計算
         paymentOut = r > 0
           ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
           : balance / remain;
