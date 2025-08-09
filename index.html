@@ -3,126 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（軽量安定版・万円表示）</title>
+  <title>住宅ローンシミュレーター（magazine style・万円表示）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     :root{
-      --primary:#005b96;
-      --primary-2:#0077c2;
-      --bg:#f0f4f8;
+      /* テーマ（青×黄×ミント） */
+      --navy:#0f3057;
+      --teal:#13a0a8;
+      --teal-2:#19b7b5;
+      --yellow:#ffd861;
+      --bg:#f7fafc;
       --card:#ffffff;
-      --muted:#5b6b7a;
-      --ring:rgba(0,91,150,.25);
-      --title:#0b5585;
+      --muted:#607184;
+      --ring:rgba(19,160,168,.25);
+      --line:#e6edf5;
     }
     *{box-sizing:border-box}
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-      padding: 24px;
-      background: var(--bg);
-      max-width: 1100px;
-      margin: auto;
-      font-size: 18px;
-      color:#102a43;
+    body{
+      font-family: "Noto Sans JP", system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", sans-serif;
+      padding:20px; background:var(--bg); max-width:1100px; margin:auto; font-size:18px; color:#102a43;
+      background-image: radial-gradient(ellipse at 10% -20%, rgba(255,216,97,.18), transparent 45%),
+                        radial-gradient(ellipse at 110% 10%, rgba(25,183,181,.08), transparent 40%);
     }
-    h1 { text-align: center; margin-top: 4px; }
+    h1{ text-align:center; margin:6px 0 10px; color:var(--navy); font-weight:900; letter-spacing:.02em;}
+    .subcopy{ text-align:center; color:#7a8da3; font-size:.9rem; margin-bottom:8px;}
 
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(16,42,67,.06);
-      padding: 18px;
-      margin-top: 16px;
+    .card{
+      background:var(--card); border-radius:16px; padding:18px; margin-top:16px;
+      box-shadow: 0 8px 24px rgba(15,48,87,.08);
+      border: 1px solid #eef3f9;
+      position: relative;
     }
-    /* セクション見出し（条件 / シミュレーション結果）を同じデザインに */
+    /* ピル型見出し */
     .panel-title{
-      display:flex; align-items:center; gap:.6rem;
-      font-weight:800; font-size:22px; color:var(--title); margin:2px 0 10px;
+      display:inline-flex; align-items:center; gap:.5rem; margin:-6px 0 14px; font-weight:800; color:var(--navy);
+      background:linear-gradient(90deg, var(--yellow), #fff3b3);
+      padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
+      box-shadow: 0 4px 0 rgba(15,48,87,.08);
     }
-    .panel-title::before{
-      content:""; width:10px; height:10px; border-radius:2px; background:linear-gradient(135deg,var(--primary-2),var(--primary));
-      box-shadow:0 0 0 4px rgba(0,91,150,.12);
+    .panel-title .chip{
+      display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px;
+      background:linear-gradient(135deg,var(--teal),var(--teal-2)); color:white; font-weight:900; font-size:.9rem;
+      box-shadow:0 2px 0 rgba(0,0,0,.12);
     }
 
-    .section-title { font-weight: 700; font-size: 18px; margin-top: 18px; }
-    .range-labels { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 6px 0 8px; color:var(--muted); }
-    .inline-group { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-    input[type="number"], input[type="text"], input[type="range"], select {
-      padding: .7rem .8rem; font-size: 1rem; width: 100%; border-radius: 10px; border:1px solid #d6e2ef; background:#fff;
+    /* 斜線背景のブロック見出し */
+    .section-title{
+      font-weight:800; font-size:16px; color:var(--navy); margin:18px 0 8px; display:inline-block; padding:.35rem .7rem;
+      background:
+        repeating-linear-gradient(-45deg, rgba(255,216,97,.35) 0 6px, rgba(255,216,97,.22) 6px 12px);
+      border-radius:8px;
+    }
+
+    .range-labels{ display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin:4px 0 8px;}
+    .inline-group{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;}
+
+    input[type="number"], input[type="text"], input[type="range"], select{
+      padding:.7rem .8rem; font-size:1rem; width:100%; border-radius:12px; border:1px solid #dfe8f2; background:#fff;
       transition: box-shadow .15s ease, border-color .15s ease;
     }
-    input[type="number"]:focus, input[type="text"]:focus, select:focus {
-      outline:none; border-color: var(--primary-2); box-shadow: 0 0 0 4px var(--ring);
+    input[type="number"]:focus, input[type="text"]:focus, select:focus{
+      outline:none; border-color: var(--teal-2); box-shadow: 0 0 0 4px var(--ring);
     }
-    input[type="range"]{ accent-color: var(--primary-2); }
+    input[type="range"]{ accent-color: var(--teal-2); }
 
     /* Buttons */
     .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
-    .btn {
-      appearance:none; border:none; cursor:pointer; font-weight:700; padding:1rem;
-      border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
-    }
+    .btn{ appearance:none; border:none; cursor:pointer; font-weight:900; letter-spacing:.02em;
+      padding:1rem; border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;}
     .btn:active{ transform: translateY(1px); }
     .btn-primary{
-      color:#fff; background: linear-gradient(135deg, var(--primary-2), var(--primary));
-      box-shadow: 0 6px 14px rgba(0,91,150,.18);
+      color:#0c243b; background: linear-gradient(135deg, var(--yellow), #ffe991);
+      border:1px solid rgba(0,0,0,.06); box-shadow: 0 8px 18px rgba(255,216,97,.35);
     }
-    .btn-primary:hover{ filter: brightness(1.05); box-shadow: 0 8px 18px rgba(0,91,150,.26); }
     .btn-ghost{
-      background:#eef6ff; color:#0b5585; border:1px solid #cfe3f7;
+      background:#eafcfd; color:#0b4a4f; border:1px solid #c6f0f1; box-shadow: 0 4px 10px rgba(19,160,168,.12);
     }
 
-    .kpi{
-      display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;
-    }
-    .kpi .tile{
-      background:#fff; border:1px solid #e6edf5; border-radius:12px; padding:14px;
-    }
-    .kpi .label{font-size:.9rem; color:#334e68;}
-    .kpi .value{font-weight:800; font-size:1.3rem; margin-top:4px;}
-    #result { white-space: pre-line; font-size: 1rem; }
+    .kpi{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;}
+    .kpi .tile{ background:#fff; border:1px dashed #d9e6f3; border-radius:12px; padding:14px;}
+    .kpi .label{ font-size:.9rem; color:#3a5066;}
+    .kpi .value{ font-weight:900; font-size:1.3rem; margin-top:4px; color:var(--navy);}
+    #result{ white-space: pre-line; font-size:1rem; background:#fffef5; border:1px dashed #ffe28d; border-radius:10px; padding:10px;}
 
-    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem; }
-    th, td { border: 1px solid #e6edf5; padding: 0.6rem; text-align: right; }
-    th { background-color: #eaf4ff; font-weight:700; }
+    table{ width:100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem;}
+    th, td{ border:1px solid var(--line); padding:.6rem; text-align:right;}
+    th{ background:#f2fbfc; color:#0b4a4f; font-weight:800;}
 
-    /* グラフはラッパーで余白＆角丸、canvasは100%描画 */
+    /* グラフラッパー（ノート風） */
     .chart-block{ margin-top:14px; }
-    .chart-title{ font-size: 16px; font-weight:700; color:#2b455c; margin: 6px 4px; }
+    .chart-title{ font-size: 16px; font-weight:800; color:var(--navy); margin: 6px 4px; }
     .chart-wrap{
-      width:100%;
-      height: 240px;                 /* デスクトップ高さ */
-      background:#fff;
-      border-radius:12px;
-      padding:10px;
-      overflow:hidden;
+      width:100%; height:240px; background:
+        linear-gradient(#ffffff,#ffffff) padding-box,
+        repeating-linear-gradient(0deg, #f2f7fb 0 28px, #e9f1f8 28px 29px) border-box;
+      border:1px solid #dfe8f2; border-radius:12px; padding:10px; overflow:hidden;
     }
-    .chart-wrap > canvas{
-      display:block;
-      width:100% !important;
-      height:100% !important;
-    }
-    /* スマホは半分以下 */
-    @media (max-width: 640px) {
-      .chart-wrap{ height: 120px; }
-    }
+    .chart-wrap > canvas{ display:block; width:100% !important; height:100% !important; }
+    @media (max-width: 640px){ .chart-wrap{ height:120px; } }
 
-    .rate-input-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-    .rate-input-row span { width: 20%; font-size: 0.95rem; color:var(--muted); }
-    .rate-input-row input { width: 35%; }
-    .note{font-size:.9rem;color:var(--muted); margin-top:4px}
-    .row-end{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
-    .hint{font-size:.9rem; color:#334e68;}
+    .rate-input-row{ display:flex; align-items:center; gap:10px; margin-top:8px;}
+    .rate-input-row span{ width:20%; font-size:.95rem; color:var(--muted);}
+    .rate-input-row input{ width:35%; }
+    .note{ font-size:.9rem; color:#3a5066; margin-top:4px}
+    .row-end{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
+    .hint{ font-size:.9rem; color:#3a5066;}
   </style>
 </head>
 <body onload="generateRateInputs()">
   <h1>🏠 住宅ローンシミュレーター</h1>
+  <div class="subcopy">Magazine style / Blue × Yellow</div>
 
   <!-- 条件 -->
   <div class="card">
-    <div class="panel-title">条件</div>
+    <div class="panel-title"><span class="chip">1</span>条件</div>
 
     <div class="section-title">借入額（万円）</div>
     <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
@@ -164,22 +160,13 @@
 
   <!-- シミュレーション結果 -->
   <div class="card">
-    <div class="panel-title">シミュレーション結果</div>
+    <div class="panel-title"><span class="chip">2</span>シミュレーション結果</div>
     <div id="result"></div>
 
     <div class="kpi" id="kpiTiles" style="display:none;">
-      <div class="tile">
-        <div class="label">初月の月々返済額</div>
-        <div class="value" id="kpi-first"></div>
-      </div>
-      <div class="tile">
-        <div class="label">平均の月々返済額</div>
-        <div class="value" id="kpi-avg"></div>
-      </div>
-      <div class="tile">
-        <div class="label">最大の月々返済額</div>
-        <div class="value" id="kpi-max"></div>
-      </div>
+      <div class="tile"><div class="label">初月の月々返済額</div><div class="value" id="kpi-first"></div></div>
+      <div class="tile"><div class="label">平均の月々返済額</div><div class="value" id="kpi-avg"></div></div>
+      <div class="tile"><div class="label">最大の月々返済額</div><div class="value" id="kpi-max"></div></div>
     </div>
 
     <div class="chart-block">
@@ -260,7 +247,6 @@
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
     if (rateChartInstance) {
-      // ラベルは「N年目」
       rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
       rateChartInstance.data.datasets[0].data = rates;
       rateChartInstance.update();
@@ -291,7 +277,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ =========
+  // ========= ドラッグ対応グラフ（X軸は「N年目」） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -307,13 +293,13 @@
         datasets: [{
           label: '半年ごとの金利（％）',
           data: rates,
-          borderColor: '#ff7f0e',
-          backgroundColor: 'rgba(255,127,14,0.12)',
+          borderColor: '#19b7b5',
+          backgroundColor: 'rgba(25,183,181,0.12)',
           pointRadius: 4,
-          pointHoverRadius: 6,
+          pointHoverRadius: 7,
           pointHitRadius: 14,
           borderWidth: 3,
-          tension: 0.15
+          tension: 0.2
         }]
       },
       options: {
@@ -337,15 +323,13 @@
             beginAtZero: true,
             suggestedMax: 5,
             grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: {
-              font: { size: 14 },
-              callback: v => Number(v).toFixed(1) + '%'
-            }
+            ticks: { font: { size: 14 }, callback: v => Number(v).toFixed(1) + '%' }
           }
         },
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor:'#0f3057', titleColor:'#fff', bodyColor:'#fff',
             callbacks: {
               title: ctx => labels[ctx[0].dataIndex],
               label: ctx => `金利: ${Number(ctx.parsed.y).toFixed(2)}%`
@@ -479,7 +463,7 @@
     }
   }
 
-  // ========= グラフ描画（下2つ：Y軸の最小値を0に固定） =========
+  // ========= グラフ描画（Y最小値0・テーマ色） =========
   function drawCharts(data) {
     const labels = data.map(d => d['月']);
     const principalData = data.map(d => d['元金']);
@@ -496,35 +480,23 @@
       animation:false,
       scales: {
         x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:axisFont }, grid:{display:false} },
-        y: { 
-          ticks: { font:axisFont }, 
-          grid:{ color:'rgba(0,0,0,0.08)' },
-          beginAtZero: true,
-          min: 0
-        }
+        y: { ticks: { font:axisFont }, grid:{ color:'rgba(0,0,0,0.08)' }, beginAtZero:true, min:0 }
       },
       plugins: { legend:{display:false} }
     };
 
     paymentChart = new Chart(document.getElementById('paymentChart').getContext('2d'), {
       type: 'bar',
-      data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
+      data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#13a0a8' }] },
       options: common
     });
     stackedChart = new Chart(document.getElementById('stackedChart').getContext('2d'), {
       type: 'bar',
       data: { labels, datasets: [
-        { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
-        { label: '利息', data: interestData, backgroundColor: '#FF9800' }
+        { label: '元金', data: principalData, backgroundColor: '#13a0a8' },
+        { label: '利息', data: interestData, backgroundColor: '#ffd861' }
       ] },
-      options: { 
-        ...common, 
-        scales: { 
-          ...common.scales, 
-          x:{ ...common.scales.x, stacked:true }, 
-          y:{ ...common.scales.y, stacked:true, beginAtZero:true, min:0 }
-        } 
-      }
+      options: { ...common, scales: { ...common.scales, x:{...common.scales.x, stacked:true}, y:{...common.scales.y, stacked:true} } }
     });
   }
 
