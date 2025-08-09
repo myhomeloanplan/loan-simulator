@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（ドラッグ仕様統合版・万円表示）</title>
+  <title>住宅ローンシミュレーター（軽量版・万円表示）</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -30,7 +30,7 @@
     .card {
       background: var(--card);
       border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(16,42,67,.08);
+      box-shadow: 0 6px 20px rgba(16,42,67,.06);
       padding: 18px;
       margin-top: 16px;
     }
@@ -55,9 +55,9 @@
     .btn:active{ transform: translateY(1px); }
     .btn-primary{
       color:#fff; background: linear-gradient(135deg, var(--primary-2), var(--primary));
-      box-shadow: 0 8px 18px rgba(0,91,150,.28);
+      box-shadow: 0 6px 14px rgba(0,91,150,.18);
     }
-    .btn-primary:hover{ filter: brightness(1.05); box-shadow: 0 10px 22px rgba(0,91,150,.35); }
+    .btn-primary:hover{ filter: brightness(1.05); box-shadow: 0 8px 18px rgba(0,91,150,.26); }
     .btn-ghost{
       background:#eef6ff; color:#0b5585; border:1px solid #cfe3f7;
     }
@@ -75,24 +75,26 @@
     th, td { border: 1px solid #e6edf5; padding: 0.55rem; text-align: right; }
     th { background-color: #eaf4ff; font-weight:700; }
 
-    /* キャンバスの高さ：CSSで固定し、Chart.jsは maintainAspectRatio:false に */
+    /* キャンバスの高さ：CSS固定 + Chart.jsは maintainAspectRatio:false */
     .chart {
       display:block;
       width:100% !important;
-      height: 280px !important; /* デスクトップ標準 */
+      height: 240px !important; /* デスクトップ */
       background:#fff;
       border-radius:12px;
       padding:10px;
     }
-    /* スマホはむしろ高さを増やす（潰れ対策） */
+    /* スマホは半分以下（潰れ対策しつつコンパクト） */
     @media (max-width: 640px) {
-      .chart { height: 340px !important; }
+      .chart { height: 140px !important; }
     }
 
     .rate-input-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
     .rate-input-row span { width: 20%; font-size: 0.95rem; color:var(--muted); }
     .rate-input-row input { width: 35%; }
     .note{font-size:.9rem;color:var(--muted); margin-top:4px}
+    .row-end{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
+    .hint{font-size:.85rem; color:var(--muted);}
   </style>
 </head>
 <body onload="generateRateInputs()">
@@ -163,6 +165,10 @@
     <canvas id="paymentChart" class="chart"></canvas>
     <canvas id="stackedChart" class="chart"></canvas>
 
+    <div class="row-end">
+      <label class="hint"><input type="checkbox" id="toggle-table" checked> 明細テーブルを表示</label>
+      <span class="hint">※オフにすると軽くなります</span>
+    </div>
     <div id="repayment-table"></div>
   </div>
 
@@ -219,11 +225,14 @@
     drawRateChart();
   }
 
-  // ========= 入力 → グラフ反映 =========
+  // ========= 入力 → グラフ反映（軽量） =========
   function updateRateChartFromInputs() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
-    if (rateChartInstance) { rateChartInstance.data.datasets[0].data = rates; rateChartInstance.update(); }
+    if (rateChartInstance) {
+      rateChartInstance.data.datasets[0].data = rates;
+      rateChartInstance.update('none'); // アニメなし更新
+    }
   }
 
   // ========= グラフ → 入力反映 =========
@@ -250,7 +259,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ =========
+  // ========= ドラッグ対応グラフ（読みやすい目盛・軽量化） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -261,12 +270,59 @@
 
     rateChartInstance = new Chart(ctx, {
       type: 'line',
-      data: { labels, datasets: [{ label: '半年ごとの金利（％）', data: rates, borderColor: '#ff7f0e', backgroundColor: 'rgba(255,127,14,0.2)', pointRadius: 6, pointHoverRadius: 8 }] },
+      data: {
+        labels,
+        datasets: [{
+          label: '半年ごとの金利（％）',
+          data: rates,
+          borderColor: '#ff7f0e',
+          backgroundColor: 'rgba(255,127,14,0.12)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointHitRadius: 12,   // ← ドラッグしやすく
+          borderWidth: 2,
+          tension: 0.15
+        }]
+      },
       options: {
         responsive: true,
-        maintainAspectRatio: false,   // ← CSSの高さを優先
-        scales: { y: { beginAtZero: true, suggestedMax: 5, ticks: { callback: v => v.toFixed(2) + '%' } } },
+        maintainAspectRatio: false,
+        animation: false,       // ← 軽量化
+        parsing: false,         // ← 軽量化
+        normalized: true,       // ← 軽量化
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              autoSkip: true,
+              autoSkipPadding: 16,
+              maxRotation: 0,
+              font: { size: 12 }, // ← 見やすく
+              callback: (v, i, t) => {
+                // ラベルを間引き（約4つに1つ）
+                const total = t.length;
+                const every = Math.max(1, Math.floor(total / 12)); // 年数に応じて自動調整
+                return (i % every === 0) ? labels[i] : '';
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 5,
+            ticks: {
+              font: { size: 12 },
+              callback: v => v.toFixed(1) + '%'
+            }
+          }
+        },
         plugins: {
+          legend: { display: false }, // ← 軽量化
+          tooltip: {
+            callbacks: {
+              title: ctx => labels[ctx[0].dataIndex],
+              label: ctx => `金利: ${Number(ctx.parsed.y).toFixed(2)}%`
+            }
+          },
           dragData: {
             round: 2,
             showTooltip: true,
@@ -289,7 +345,7 @@
               }
               updateInputsFromRateChart(newRates);
               rateChartInstance.data.datasets[0].data = newRates;
-              rateChartInstance.update();
+              rateChartInstance.update('none');
             }
           }
         }
@@ -373,21 +429,30 @@
     document.getElementById('kpi-avg').textContent   = `${avgPay.toLocaleString()} 円`;
     document.getElementById('kpi-max').textContent   = `${maxPay.toLocaleString()} 円`;
 
-    // 明細テーブル
+    // 明細テーブル（必要な時だけ生成）
+    const showTable = document.getElementById('toggle-table').checked;
     const tableWrap = document.getElementById('repayment-table');
     tableWrap.innerHTML = '';
-    const table = document.createElement('table');
-    const thead = table.createTHead();
-    const tbody = table.createTBody();
-    thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
-    data.forEach(row => {
-      const tr = tbody.insertRow();
-      ['月', '元金', '利息', '支払額', '残高'].forEach(k => { const td = tr.insertCell(); td.textContent = row[k].toLocaleString(); });
-    });
-    tableWrap.appendChild(table);
+    if (showTable) {
+      const table = document.createElement('table');
+      const thead = table.createTHead();
+      const tbody = table.createTBody();
+      thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
+      // 直接ループ生成（軽量）
+      for (let i=0;i<data.length;i++){
+        const row = data[i];
+        const tr = tbody.insertRow();
+        const cols = ['月','元金','利息','支払額','残高'];
+        for (let c=0;c<cols.length;c++){
+          const td = tr.insertCell();
+          td.textContent = row[cols[c]].toLocaleString();
+        }
+      }
+      tableWrap.appendChild(table);
+    }
   }
 
-  // ========= グラフ描画 =========
+  // ========= グラフ描画（軽量設定） =========
   function drawCharts(data) {
     const labels = data.map(d => d['月']);
     const principalData = data.map(d => d['元金']);
@@ -399,15 +464,28 @@
     if (paymentChart) paymentChart.destroy();
     if (stackedChart) stackedChart.destroy();
 
+    const common = {
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      parsing:false,
+      normalized:true,
+      scales: {
+        x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:{size:12} }, grid:{display:false} },
+        y: { ticks: { font:{size:12} } }
+      },
+      plugins: { legend:{display:false} }
+    };
+
     balanceChart = new Chart(document.getElementById('balanceChart'), {
       type: 'line',
-      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', fill: false }] },
-      options: { responsive:true, maintainAspectRatio:false }
+      data: { labels, datasets: [{ label: 'ローン残高', data: balanceData, borderColor: 'blue', borderWidth:2, pointRadius:0 }] },
+      options: common
     });
     paymentChart = new Chart(document.getElementById('paymentChart'), {
       type: 'bar',
       data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
-      options: { responsive:true, maintainAspectRatio:false }
+      options: common
     });
     stackedChart = new Chart(document.getElementById('stackedChart'), {
       type: 'bar',
@@ -415,7 +493,7 @@
         { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
         { label: '利息', data: interestData, backgroundColor: '#FF9800' }
       ] },
-      options: { responsive:true, maintainAspectRatio:false, scales: { x: { stacked: true }, y: { stacked: true } } }
+      options: { ...common, scales: { ...common.scales, x:{ ...common.scales.x, stacked:true }, y:{ ...common.scales.y, stacked:true } } }
     });
   }
 
@@ -427,6 +505,19 @@
     XLSX.utils.book_append_sheet(wb, ws, '返済シミュレーション');
     XLSX.writeFile(wb, 'loan_simulation.xlsx');
   }
+
+  // テーブル表示トグル時は再描画だけ（計算は不要）
+  document.addEventListener('change', (e)=>{
+    if (e.target && e.target.id === 'toggle-table' && lastSimData.length){
+      // 直近結果で表示/非表示切り替え
+      const monthsData = lastSimData;
+      // totalは保持していないので最小限再集計
+      let totalPrincipal=0,totalInterest=0;
+      for(const r of monthsData){ totalPrincipal+=r['元金']; totalInterest+=r['利息']; }
+      const payments = monthsData.map(r=>r['支払額']);
+      displayResult(monthsData, totalPrincipal, totalInterest, payments);
+    }
+  });
   </script>
 </body>
 </html>
