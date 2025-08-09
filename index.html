@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（magazine style・万円表示）</title>
+  <title>住宅ローンシミュレーター（compact bulk rate・万円表示）</title>
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <!-- Libs -->
@@ -15,7 +15,6 @@
       --navy:#0e2a47;
       --teal:#10939a;
       --teal-2:#0c7e86;
-      --teal-dark:#0a5b60;
       --yellow:#ffbf3a;
       --yellow-2:#ffe28f;
       --bg:#f7fafc;
@@ -34,9 +33,8 @@
                         radial-gradient(ellipse at 110% 10%, rgba(25,183,181,.08), transparent 40%);
     }
 
-    /* タイトル */
     .title-wrap{ text-align:center; margin:6px 0 10px;}
-    .subtitle{ display:inline-block; margin-bottom:8px; font-weight:800; color:#0d3a57; letter-spacing:.08em; }
+    .subtitle{ display:inline-block; margin-bottom:8px; font-weight:800; color:#0d3a57; letter-spacing:.08em;}
     .subtitle::before{ content:"＼ "; }
     .subtitle::after{ content:" ／"; }
     .title{ margin:0; color:var(--navy); font-weight:900; letter-spacing:.02em; font-size:clamp(22px,4.5vw,32px);}
@@ -52,7 +50,9 @@
       background:linear-gradient(90deg, var(--yellow), var(--yellow-2));
       padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
       box-shadow: 0 4px 0 rgba(15,48,87,.08);
-      font-size: 18px; width: fit-content;
+      font-size: 18px;
+      width: fit-content;
+      white-space: nowrap;
     }
     .panel-title .chip{
       display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px;
@@ -60,12 +60,11 @@
       box-shadow:0 2px 0 rgba(0,0,0,.12);
     }
 
-    /* 小見出し（スマホでも1行） */
     .section-title{
       font-weight:900; font-size:16px; color:var(--navy); margin:18px 0 8px; padding:.35rem .7rem;
       background: repeating-linear-gradient(-45deg, rgba(255,216,97,.35) 0 6px, rgba(255,216,97,.22) 6px 12px);
       border-radius:8px;
-      display:block; width:fit-content; white-space:nowrap;
+      display:block; width: fit-content; white-space: nowrap;
     }
 
     .range-labels{ display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin:4px 0 8px;}
@@ -80,7 +79,6 @@
     }
     input[type="range"]{ accent-color: var(--teal-2); }
 
-    /* Buttons（+2pt） */
     .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
     .btn{
       appearance:none; border:none; cursor:pointer; font-weight:900; letter-spacing:.02em;
@@ -98,63 +96,79 @@
       color:#083b40; border:1px solid #6fd0d3; box-shadow: 0 4px 10px rgba(13,126,134,.18);
     }
 
+    .kpi{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;}
+    .kpi .tile{ background:#fff; border:1px dashed #d9e6f3; border-radius:12px; padding:14px;}
+    .kpi .label{ font-size:.9rem; color:#3a5066;}
+    .kpi .value{ font-weight:900; font-size:1.3rem; margin-top:4px; color:var(--navy);}
+    #result{ white-space: pre-line; font-size:1rem; background:#fffef5; border:1px dashed #ffe28d; border-radius:10px; padding:10px;}
+
     table{ width:100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem;}
     th, td{ border:1px solid var(--line); padding:.6rem; text-align:right;}
     th{ background:#f2fbfc; color:#0b4a4f; font-weight:800;}
 
-    /* グラフ */
     .chart-block{ margin-top:14px; }
     .chart-title{ font-size: 16px; font-weight:800; color:var(--navy); margin: 6px 4px; }
     .chart-wrap{
-      width:100%; height:360px; /* 縦1.5倍（スマホは下のメディアクエリ）*/
+      width:100%; height:300px;
       background:
         linear-gradient(#ffffff,#ffffff) padding-box,
         repeating-linear-gradient(0deg, #f2f7fb 0 28px, #e9f1f8 28px 29px) border-box;
       border:1px solid #dfe8f2; border-radius:12px; padding:10px; overflow:hidden;
     }
     .chart-wrap > canvas{ display:block; width:100% !important; height:100% !important; }
-    @media (max-width: 640px){ .chart-wrap{ height:180px; } }
-
-    /* 半年ごとの金利入力（テキストボックス） */
-    #rate-inputs{ display:grid; grid-template-columns: 1fr; gap:6px; margin-top:6px; }
-    .rate-input-row{ display:flex; align-items:center; gap:10px; }
-    .rate-input-row span{ min-width:80px; font-size:.95rem; color:var(--muted);}
-    .rate-input-row input{ width:35%; min-width:120px; }
+    @media (max-width: 640px){ .chart-wrap{ height:170px; } }
 
     .note{ font-size:.9rem; color:#3a5066; margin-top:4px}
     .row-end{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
     .hint{ font-size:.9rem; color:#3a5066;}
 
-    /* ==== 結果バナー（総額・総利息＋月々返済額まとめ） ==== */
-    .result-banner{
-      border-radius:16px; overflow:hidden; margin-bottom:12px;
-      box-shadow:0 10px 24px rgba(12,126,134,.18);
-      border:1px solid #cfe9ea; position: relative; background:#fff;
-    }
-    .result-banner.teal::before{
-      content:""; position:absolute; inset:0 0 auto 0; height:8px;
-      background:linear-gradient(135deg, var(--teal-2), var(--teal));
-    }
-    .result-banner .banner-body{
-      display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
-      gap:12px; padding:18px 14px 14px 14px;
-    }
-    .metric{
-      background:linear-gradient(180deg,#ffffff, #f6fbfb);
-      border:1px solid #e3f0f1; border-radius:12px; padding:12px 14px;
-    }
-    .metric span{ display:block; color:var(--teal-dark); font-weight:800; font-size:.95rem; margin-bottom:6px; }
-    .metric strong{
-      display:block; color:var(--teal-dark); font-weight:900;
-      font-size: clamp(22px, 5vw, 32px); line-height:1.1; letter-spacing:.02em;
-    }
-    .metric strong > span{ font-size:.6em; font-weight:700; margin-left:.25em; transform: translateY(-.05em); display:inline-block; color:#2f4f4f; }
+    .rate-input-row{ display:flex; align-items:center; gap:10px; margin-top:8px;}
+    .rate-input-row span{ width:20%; font-size:.95rem; color:var(--muted);}
+    .rate-input-row input{ width:35%; }
 
-    /* 月々返済額のまとめボックス */
-    .metric.monthly{ display:flex; flex-direction:column; gap:6px; }
-    .monthly-list{ display:grid; grid-template-columns: 1fr auto; row-gap:4px; column-gap:12px; align-items:baseline;}
-    .monthly-list .label{ color:#345; font-weight:700; }
-    .monthly-list .value{ font-weight:900; color:var(--teal-dark); }
+    /* 一括入力ツールバー */
+    .rate-toolbar{
+      display:grid;
+      grid-template-columns: 1fr auto auto;
+      gap:10px;
+      align-items:center;
+      margin-top:8px;
+    }
+    @media (max-width: 640px){
+      .rate-toolbar{ grid-template-columns: 1fr 1fr; }
+      .rate-toolbar .btn-compact{ grid-column: 1 / -1; }
+    }
+    .rate-field{
+      display:flex; align-items:center; gap:6px;
+      background:#fff; border:1px solid #dfe8f2; border-radius:12px;
+      padding:6px 8px; position:relative;
+    }
+    .rate-field .unit{ color:#5f6f84; font-weight:700; margin-left:2px; }
+    .rate-field input{
+      width:90px; text-align:right; border:none; outline:none; font-weight:800;
+      font-size:1rem; padding:.4rem .2rem; border-radius:8px;
+    }
+    .chip-btn{
+      border:none; cursor:pointer; padding:.35rem .55rem; border-radius:999px;
+      background:#e9f7f8; color:#0c7e86; font-weight:800;
+    }
+    .chip-btn:active{ transform:translateY(1px); }
+    .scope-field{ display:flex; align-items:center; gap:8px; }
+    .scope-field select{
+      padding:.6rem .7rem; border-radius:12px; border:1px solid #dfe8f2; background:#fff;
+      font-weight:700; min-width: 9.5em;
+    }
+    .btn-compact{
+      color:#fff;
+      background:linear-gradient(135deg,#0c7e86,#10939a);
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 8px 18px rgba(12,126,134,.28);
+      padding:.7rem 1rem; border-radius:12px; display:inline-flex; gap:.5rem; align-items:center;
+      font-weight:900;
+    }
+    .btn-compact:hover{ filter:brightness(1.05); }
+    .btn-compact:active{ transform:translateY(1px); }
+    .sr-only{ position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0; }
   </style>
 </head>
 <body onload="generateRateInputs()">
@@ -184,17 +198,30 @@
     </div>
 
     <div class="section-title">金利（％）</div>
-    <div class="inline-group">
-      <input type="number" id="bulk-rate" step="0.01" value="1.00" />
-      <button type="button" class="btn btn-ghost" onclick="applyBulkRate()">すべてに一括入力</button>
-    </div>
-    <div class="inline-group">
-      <select id="from-year"></select>
-      <input type="number" id="from-rate" step="0.01" />
-      <button type="button" class="btn btn-ghost" onclick="applyRateFromYear()">N年目以降に一括入力</button>
+
+    <!-- コンパクト一括入力ツールバー -->
+    <div class="rate-toolbar">
+      <div class="rate-field">
+        <label class="sr-only" for="bulkRateUnified">金利</label>
+        <button type="button" class="chip-btn" onclick="nudgeRate(-0.10)">−0.10</button>
+        <button type="button" class="chip-btn" onclick="nudgeRate(-0.05)">−0.05</button>
+        <input type="number" id="bulkRateUnified" step="0.01" value="1.00" />
+        <button type="button" class="chip-btn" onclick="nudgeRate(0.05)">+0.05</button>
+        <button type="button" class="chip-btn" onclick="nudgeRate(0.10)">+0.10</button>
+        <span class="unit">%</span>
+      </div>
+
+      <div class="scope-field">
+        <select id="applyScope"></select>
+      </div>
+
+      <button type="button" class="btn-compact" onclick="applyRateUnified()">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M21 7L9 19l-6-6 1.5-1.5L9 16l10.5-10.5L21 7z"/></svg>
+        適用
+      </button>
     </div>
 
-    <!-- 半年ごとの金利テキストボックス -->
+    <!-- 半年ごとの手入力欄 -->
     <div id="rate-inputs"></div>
 
     <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
@@ -210,26 +237,11 @@
   <div class="card">
     <div class="panel-title"><span class="chip">2</span>シミュレーション結果</div>
 
-    <!-- 結果バナー：総額・総利息・月々返済額まとめ -->
-    <div class="result-banner teal" id="resultBanner" style="display:none;">
-      <div class="banner-body">
-        <div class="metric">
-          <span>総返済額</span>
-          <strong id="totalRepaymentVal">-<span>円</span></strong>
-        </div>
-        <div class="metric">
-          <span>総利息</span>
-          <strong id="totalInterestVal">-<span>円</span></strong>
-        </div>
-        <div class="metric monthly">
-          <span>月々返済額</span>
-          <div class="monthly-list">
-            <div class="label">初月</div><div class="value" id="m-first">- 円</div>
-            <div class="label">平均</div><div class="value" id="m-avg">- 円</div>
-            <div class="label">最大</div><div class="value" id="m-max">- 円</div>
-          </div>
-        </div>
-      </div>
+    <div id="result"></div>
+    <div class="kpi" id="kpiTiles" style="display:none;">
+      <div class="tile"><div class="label">初月の月々返済額</div><div class="value" id="kpi-first"></div></div>
+      <div class="tile"><div class="label">平均の月々返済額</div><div class="value" id="kpi-avg"></div></div>
+      <div class="tile"><div class="label">最大の月々返済額</div><div class="value" id="kpi-max"></div></div>
     </div>
 
     <div class="chart-block">
@@ -265,9 +277,9 @@
   }
   function syncAmountFromText() {
     const raw = document.getElementById('amount').value.replace(/[^\d]/g, '');
-    const num = parseInt(raw || '0');
-    document.getElementById('amount-range').value = num;
-    document.getElementById('amount').value = num.toLocaleString();
+    aNum = parseInt(raw || '0');
+    document.getElementById('amount-range').value = aNum;
+    document.getElementById('amount').value = aNum.toLocaleString();
   }
   function syncYearsFromRange() {
     const val = parseInt(document.getElementById('years-range').value);
@@ -286,13 +298,21 @@
     const container = document.getElementById('rate-inputs');
     container.innerHTML = '';
     const years = parseInt(document.getElementById('years').value);
-    const fromYearSelect = document.getElementById('from-year');
-    fromYearSelect.innerHTML = '';
+    const applyScope = document.getElementById('applyScope');
+    applyScope.innerHTML = '';
+
+    // プルダウン候補：すべて / 1年目以降〜years年目以降（1年刻み）
+    const optAll = document.createElement('option');
+    optAll.value = 'all'; optAll.textContent = 'すべて';
+    applyScope.appendChild(optAll);
+    for (let y = 1; y <= years; y++) {
+      const o = document.createElement('option');
+      o.value = String(y);
+      o.textContent = `${y}年目以降`;
+      applyScope.appendChild(o);
+    }
 
     for (let y = 1; y <= years; y++) {
-      const option = document.createElement('option');
-      option.value = y; option.textContent = `${y} 年目以降`; fromYearSelect.appendChild(option);
-
       const row = document.createElement('div'); row.className = 'rate-input-row';
       const label = document.createElement('span'); label.textContent = `${y}年目`;
       const input1 = document.createElement('input'); const input2 = document.createElement('input');
@@ -319,28 +339,34 @@
   // ========= グラフ → 入力反映 =========
   function updateInputsFromRateChart(rates) {
     const inputs = document.querySelectorAll('.rate-input');
-    rates.forEach((r, i) => { if (inputs[i]) inputs[i].value = parseFloat(r).toFixed(2); });
+    rates.forEach((r, i) => { inputs[i].value = parseFloat(r).toFixed(2); });
     simulate();
   }
 
-  // ========= 金利一括適用 =========
-  function applyBulkRate() {
-    const rate = parseFloat(document.getElementById('bulk-rate').value);
-    if (isNaN(rate)) return alert('有効な金利を入力してください。');
-    document.querySelectorAll('.rate-input').forEach(inp => inp.value = rate.toFixed(2));
-    updateRateChartFromInputs();
+  // ========= 一括入力ツールバー =========
+  function nudgeRate(delta){
+    const el = document.getElementById('bulkRateUnified');
+    let v = parseFloat(el.value || '0');
+    v = Math.max(0, Math.min(6, (Math.round((v + delta)*100)/100)));
+    el.value = v.toFixed(2);
   }
-  function applyRateFromYear() {
-    const fromYear = parseInt(document.getElementById('from-year').value);
-    const rate = parseFloat(document.getElementById('from-rate').value);
+  function applyRateUnified(){
+    const rate = parseFloat(document.getElementById('bulkRateUnified').value);
     if (isNaN(rate)) return alert('有効な金利を入力してください。');
+    const scopeVal = document.getElementById('applyScope').value;
     const inputs = document.querySelectorAll('.rate-input');
-    const startIndex = (fromYear - 1) * 2;
-    for (let i = startIndex; i < inputs.length; i++) inputs[i].value = rate.toFixed(2);
+
+    if (scopeVal === 'all') {
+      inputs.forEach(inp => inp.value = rate.toFixed(2));
+    } else {
+      const fromYear = parseInt(scopeVal);
+      const startIndex = (fromYear - 1) * 2;
+      for (let i = startIndex; i < inputs.length; i++) inputs[i].value = rate.toFixed(2);
+    }
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（Y最大6%／0.5%刻み） =========
+  // ========= ドラッグ対応グラフ（Y最大6% / 0.5刻み） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -357,25 +383,35 @@
           data: rates,
           borderColor: '#0c7e86',
           backgroundColor: 'rgba(12,126,134,0.12)',
-          pointRadius: 4, pointHoverRadius: 7, pointHitRadius: 14,
-          borderWidth: 3, tension: 0.2
+          pointRadius: 9,
+          pointHoverRadius: 12,
+          pointHitRadius: 26,
+          pointStyle: 'rectRounded',
+          borderWidth: 3,
+          tension: 0.2
         }]
       },
       options: {
-        responsive: true, maintainAspectRatio: false, animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
         scales: {
           x: {
             grid: { display: false },
             title: { display: true, text: '何年目', color:'#0e2a47', font:{weight:'bold'} },
             ticks: {
-              autoSkip: false, maxRotation: 0, font: { size: 14 },
-              callback: (value, index) => (index % 2 === 1) ? Math.floor(index / 2) + 1 : ''
+              autoSkip: false,
+              maxRotation: 0,
+              font: { size: 13 },
+              callback: (value, index) => (index % 2 === 1) ? (Math.floor(index / 2) + 1) : ''
             }
           },
           y: {
-            beginAtZero: true, min: 0, max: 6,
+            beginAtZero: true,
+            min: 0,
+            max: 6,
             grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: { font: { size: 14 }, stepSize: 0.5, callback: v => Number(v).toFixed(1) + '%' }
+            ticks: { stepSize: 0.5, font: { size: 13 }, callback: v => Number(v).toFixed(1) + '%' }
           }
         },
         plugins: {
@@ -383,18 +419,32 @@
           tooltip: {
             backgroundColor:'#0e2a47', titleColor:'#fff', bodyColor:'#fff',
             callbacks: {
-              title: (items)=> { const i = items[0].dataIndex; return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`; },
+              title: (items)=> {
+                const i = items[0].dataIndex;
+                return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`;
+              },
               label: ctx => `金利: ${Number(ctx.parsed.y).toFixed(2)}%`
             }
           },
           dragData: {
-            round: 2, showTooltip: true,
+            round: 2,
+            showTooltip: true,
+            dragX: false, dragY: true,
+            onDrag: (e, datasetIndex, index, value) => {
+              const snapped = Math.round(value / 0.05) * 0.05;
+              return Math.max(0, Math.min(6, snapped));
+            },
+            onDragStart: (e) => {
+              if (e && e.native && e.native.preventDefault) e.native.preventDefault();
+              document.body.style.touchAction = 'none';
+            },
             onDragEnd: function (e, datasetIndex, index, value) {
-              value = Math.max(0, Math.min(6, value));
+              document.body.style.touchAction = 'auto';
               const oldData = rateChartInstance.data.datasets[0].data;
               const newRates = [...oldData];
               const len = newRates.length;
               const SMOOTH_PRE_RANGE = 3;
+
               for (let i = index; i < len; i++) newRates[i] = value;
               const start = Math.max(0, index - SMOOTH_PRE_RANGE);
               const span = index - start;
@@ -417,7 +467,7 @@
 
   // ========= シミュレーション =========
   function simulate() {
-    const amount = parseAmount(document.getElementById('amount').value); // 円
+    const amount = parseAmount(document.getElementById('amount').value);
     const years = parseInt(document.getElementById('years').value);
     const months = years * 12;
     const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
@@ -472,7 +522,7 @@
     drawCharts(result);
   }
 
-  // ========= 結果表示（バナー内も更新） =========
+  // ========= 結果表示 =========
   function displayResult(data, totalPrincipal, totalInterest, payments) {
     const totalRepayment = Math.ceil(totalPrincipal + totalInterest);
     const interestRounded = Math.ceil(totalInterest);
@@ -480,15 +530,14 @@
     const avgPay = Math.round(payments.reduce((a,b)=>a+b,0) / payments.length || 0);
     const maxPay = Math.round(Math.max(...payments, 0));
 
-    const banner = document.getElementById('resultBanner');
-    banner.style.display = 'block';
-    document.getElementById('totalRepaymentVal').innerHTML = `${totalRepayment.toLocaleString()}<span>円</span>`;
-    document.getElementById('totalInterestVal').innerHTML  = `${interestRounded.toLocaleString()}<span>円</span>`;
-    document.getElementById('m-first').textContent = `${firstPay.toLocaleString()} 円`;
-    document.getElementById('m-avg').textContent   = `${avgPay.toLocaleString()} 円`;
-    document.getElementById('m-max').textContent   = `${maxPay.toLocaleString()} 円`;
+    const div = document.getElementById('result');
+    div.innerHTML = `🏁 総返済額: ${totalRepayment.toLocaleString()} 円\n📊 総利息: ${interestRounded.toLocaleString()} 円`;
 
-    // 明細テーブル
+    document.getElementById('kpiTiles').style.display = 'grid';
+    document.getElementById('kpi-first').textContent = `${firstPay.toLocaleString()} 円`;
+    document.getElementById('kpi-avg').textContent   = `${avgPay.toLocaleString()} 円`;
+    document.getElementById('kpi-max').textContent   = `${maxPay.toLocaleString()} 円`;
+
     const showTable = document.getElementById('toggle-table').checked;
     const tableWrap = document.getElementById('repayment-table');
     tableWrap.innerHTML = '';
@@ -520,9 +569,11 @@
     if (paymentChart) paymentChart.destroy();
     if (stackedChart) stackedChart.destroy();
 
-    const axisFont = { size: 14 };
+    const axisFont = { size: 13 };
     const common = {
-      responsive:true, maintainAspectRatio:false, animation:false,
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
       scales: {
         x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:axisFont }, grid:{display:false} },
         y: { ticks: { font:axisFont }, grid:{ color:'rgba(0,0,0,0.08)' }, beginAtZero:true, min:0 }
@@ -554,7 +605,7 @@
     XLSX.writeFile(wb, 'loan_simulation.xlsx');
   }
 
-  // テーブル表示トグル：再描画
+  // テーブル表示トグル
   document.addEventListener('change', (e)=>{
     if (e.target && e.target.id === 'toggle-table' && lastSimData.length){
       let totalPrincipal=0,totalInterest=0;
