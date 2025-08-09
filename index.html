@@ -85,11 +85,21 @@
     }
     @media (max-width:640px){ .rate-toolbar{ grid-template-columns: 1fr 1fr; } .rate-toolbar .btn-compact{ grid-column:1/-1; } }
 
-    .rate-field{
-      display:grid; grid-template-columns: 36px minmax(60px,84px) 18px 36px; /* 数字欄を少し広く */
-  align-items:center;
-  gap:4px; background:#fff; border:1px solid #dfe8f2; border-radius:12px; padding:6px 8px; width:max-content; max-width:100%;
-    }
+    @media (min-width: 768px) {
+  .rate-field{
+    height: 44px;                 /* 高さを統一 */
+    display:grid; 
+    grid-template-columns: 36px minmax(60px,84px) 18px 36px;
+    align-items:center;
+    gap:4px; 
+    background:#fff; 
+    border:1px solid #dfe8f2; 
+    border-radius:12px; 
+    padding:0 8px;                /* 上下paddingを0に */
+    width:max-content; 
+    max-width:100%;
+  }
+}
     .icon-btn{
       width:36px; height:36px; border:none; background:#e9f7f8; color:#0c7e86; border-radius:10px;
       display:inline-flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
@@ -109,18 +119,35 @@
       .rate-suffix{ font-size:.95rem; }
     }
 
-    .scope-field select{
-      padding:.6rem .7rem; border-radius:12px; border:1px solid #dfe8f2; background:#fff; font-weight:700; min-width:9.5em;
-    }
-.btn-compact{
-  color:#fff; background:linear-gradient(135deg,#0c7e86,#10939a); border:1px solid rgba(0,0,0,.08);
-  box-shadow:0 8px 18px rgba(12,126,134,.28); 
-  padding:.7rem 1rem; 
-  border-radius:12px; 
-  display:inline-flex; 
-  gap:.5rem; 
-  align-items:center; 
-  font-weight:900;
+@media (min-width: 768px) {
+  .scope-field select{
+    height: 44px;                 /* 高さを統一 */
+    padding:0 .7rem;              /* 上下paddingを0に */
+    border-radius:12px; 
+    border:1px solid #dfe8f2; 
+    background:#fff; 
+    font-size:1rem;
+    font-weight:700; 
+    min-width:9.5em;
+    display: flex;
+    align-items: center;          /* 縦中央揃え */
+  }
+}
+@media (min-width: 768px) {
+  .btn-compact{
+    height: 44px;                 /* 高さを統一 */
+    color:#fff; 
+    background:linear-gradient(135deg,#0c7e86,#10939a); 
+    border:1px solid rgba(0,0,0,.08);
+    box-shadow:0 8px 18px rgba(12,126,134,.28); 
+    padding:0 1rem;               /* 上下paddingを0に */
+    font-size:0.95rem;
+    border-radius:10px; 
+    display:inline-flex; 
+    gap:.4rem; 
+    align-items:center;           /* 縦中央揃え */
+    font-weight:900;
+  }
 }
     .btn-compact:hover{ filter:brightness(1.05); } .btn-compact:active{ transform:translateY(1px); }
   </style>
