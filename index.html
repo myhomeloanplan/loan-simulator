@@ -1,486 +1,551 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（magazine style・万円表示）</title>
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <!-- Libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <style>
-    :root{
-      --navy:#0e2a47;
-      --teal:#10939a;
-      --teal-2:#0c7e86;
-      --yellow:#ffbf3a;
-      --yellow-2:#ffe28f;
-      --bg:#f7fafc;
-      --card:#ffffff;
-      --muted:#5f6f84;
-      --ring:rgba(16,147,154,.25);
-      --line:#e6edf5;
-      --coral:#ff4d6d;
-      --coral-2:#ff6b81;
-    }
-    *{box-sizing:border-box}
-    body{
-      font-family: "Noto Sans JP", Noto Sans, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", sans-serif;
-      padding:20px; background:var(--bg); max-width:1100px; margin:auto; font-size:18px; color:#102a43;
-      background-image: radial-gradient(ellipse at 10% -20%, rgba(255,216,97,.18), transparent 45%),
-                        radial-gradient(ellipse at 110% 10%, rgba(25,183,181,.08), transparent 40%);
-    }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>住宅ローンシミュレーター（軽量安定版・万円表示）</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --primary:#005b96;
+      --primary-2:#0077c2;
+      --bg:#f0f4f8;
+      --card:#ffffff;
+      --muted:#5b6b7a;
+      --ring:rgba(0,91,150,.25);
+      --title:#0b5585;
+    }
+    *{box-sizing:border-box}
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      padding: 24px;
+      background: var(--bg);
+      max-width: 1100px;
+      margin: auto;
+      font-size: 18px;
+      color:#102a43;
+    }
+    h1 { text-align: center; margin-top: 4px; }
 
-    /* タイトルエリア */
-    .title-wrap{ text-align:center; margin:6px 0 10px;}
-    /* ★サブタイトル＝タイトルの上。背景・枠なし（背景に馴染む） */
-    .subtitle{
-      display:inline-block; margin-bottom:8px; font-weight:800; color:#0d3a57; letter-spacing:.08em;
-    }
-    .subtitle::before{ content:"＼ "; }
-    .subtitle::after{ content:" ／"; }
-    .title{ margin:0; color:var(--navy); font-weight:900; letter-spacing:.02em; font-size:clamp(22px,4.5vw,32px);}
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(16,42,67,.06);
+      padding: 18px;
+      margin-top: 16px;
+    }
+    /* セクション見出し（条件 / シミュレーション結果）を同じデザインに */
+    .panel-title{
+      display:flex; align-items:center; gap:.6rem;
+      font-weight:800; font-size:22px; color:var(--title); margin:2px 0 10px;
+    }
+    .panel-title::before{
+      content:""; width:10px; height:10px; border-radius:2px; background:linear-gradient(135deg,var(--primary-2),var(--primary));
+      box-shadow:0 0 0 4px rgba(0,91,150,.12);
+    }
 
-    .card{
-      background:var(--card); border-radius:16px; padding:18px; margin-top:16px;
-      box-shadow: 0 8px 24px rgba(15,48,87,.08);
-      border: 1px solid #eef3f9;
-      position: relative;
-    }
-    /* ★ピル見出しはブロック化（次の要素を必ず下段へ） */
-    .panel-title{
-      display:flex; align-items:center; gap:.5rem; margin:-6px 0 14px; font-weight:900; color:var(--navy);
-      background:linear-gradient(90deg, var(--yellow), var(--yellow-2));
-      padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
-      box-shadow: 0 4px 0 rgba(15,48,87,.08);
-      font-size: 18px;
-      width: fit-content;
-    }
-    .panel-title .chip{
-      display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px;
-      background:linear-gradient(135deg,var(--teal),var(--teal-2)); color:white; font-weight:900; font-size:.9rem;
-      box-shadow:0 2px 0 rgba(0,0,0,.12);
-    }
+    .section-title { font-weight: 700; font-size: 18px; margin-top: 18px; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 6px 0 8px; color:var(--muted); }
+    .inline-group { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+    input[type="number"], input[type="text"], input[type="range"], select {
+      padding: .7rem .8rem; font-size: 1rem; width: 100%; border-radius: 10px; border:1px solid #d6e2ef; background:#fff;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      outline:none; border-color: var(--primary-2); box-shadow: 0 0 0 4px var(--ring);
+    }
+    input[type="range"]{ accent-color: var(--primary-2); }
 
-    /* 斜線背景の小見出し */
-    .section-title{
-      font-weight:900; font-size:16px; color:var(--navy); margin:18px 0 8px; padding:.35rem .7rem;
-      background: repeating-linear-gradient(-45deg, rgba(255,216,97,.35) 0 6px, rgba(255,216,97,.22) 6px 12px);
-      border-radius:8px;
-      display:block;   /* ★必ず改行させる */
-      width: fit-content;
-    }
+    /* Buttons */
+    .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
+    .btn {
+      appearance:none; border:none; cursor:pointer; font-weight:700; padding:1rem;
+      border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn-primary{
+      color:#fff; background: linear-gradient(135deg, var(--primary-2), var(--primary));
+      box-shadow: 0 6px 14px rgba(0,91,150,.18);
+    }
+    .btn-primary:hover{ filter: brightness(1.05); box-shadow: 0 8px 18px rgba(0,91,150,.26); }
+    .btn-ghost{
+      background:#eef6ff; color:#0b5585; border:1px solid #cfe3f7;
+    }
 
-    .range-labels{ display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin:4px 0 8px;}
-    .inline-group{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px;}
+    .kpi{
+      display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;
+    }
+    .kpi .tile{
+      background:#fff; border:1px solid #e6edf5; border-radius:12px; padding:14px;
+    }
+    .kpi .label{font-size:.9rem; color:#334e68;}
+    .kpi .value{font-weight:800; font-size:1.3rem; margin-top:4px;}
+    #result { white-space: pre-line; font-size: 1rem; }
 
-    input[type="number"], input[type="text"], input[type="range"], select{
-      padding:.7rem .8rem; font-size:1rem; width:100%; border-radius:12px; border:1px solid #dfe8f2; background:#fff;
-      transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    input[type="number"]:focus, input[type="text"]:focus, select:focus{
-      outline:none; border-color: var(--teal-2); box-shadow: 0 0 0 4px var(--ring);
-    }
-    input[type="range"]{ accent-color: var(--teal-2); }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem; }
+    th, td { border: 1px solid #e6edf5; padding: 0.6rem; text-align: right; }
+    th { background-color: #eaf4ff; font-weight:700; }
 
-    /* Buttons（フォント＋2pt） */
-    .actions{display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:12px; margin-top:12px;}
-    .btn{
-      appearance:none; border:none; cursor:pointer; font-weight:900; letter-spacing:.02em;
-      padding:1rem; border-radius:12px; transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
-      font-size: calc(1rem + 2pt);
-    }
-    .btn:active{ transform: translateY(1px); }
-    /* 目立つコーラル色 */
-    .btn-primary{
-      color:#fff; background: linear-gradient(135deg, var(--coral), var(--coral-2));
-      border:1px solid rgba(0,0,0,.12); box-shadow: 0 10px 22px rgba(255,77,109,.35);
-    }
-    .btn-primary:hover{ filter:brightness(1.05); }
-    .btn-ghost{
-      background: linear-gradient(135deg,#bfe8ea,#8fdde0);
-      color:#083b40; border:1px solid #6fd0d3; box-shadow: 0 4px 10px rgba(13,126,134,.18);
-    }
+    /* グラフはラッパーで余白＆角丸、canvasは100%描画 */
+    .chart-block{ margin-top:14px; }
+    .chart-title{ font-size: 16px; font-weight:700; color:#2b455c; margin: 6px 4px; }
+    .chart-wrap{
+      width:100%;
+      height: 240px;                 /* デスクトップ高さ */
+      background:#fff;
+      border-radius:12px;
+      padding:10px;
+      overflow:hidden;
+    }
+    .chart-wrap > canvas{
+      display:block;
+      width:100% !important;
+      height:100% !important;
+    }
+    /* スマホは半分以下 */
+    @media (max-width: 640px) {
+      .chart-wrap{ height: 120px; }
+    }
 
-    .kpi{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:12px;}
-    .kpi .tile{ background:#fff; border:1px dashed #d9e6f3; border-radius:12px; padding:14px;}
-    .kpi .label{ font-size:.9rem; color:#3a5066;}
-    .kpi .value{ font-weight:900; font-size:1.3rem; margin-top:4px; color:var(--navy);}
-    #result{ white-space: pre-line; font-size:1rem; background:#fffef5; border:1px dashed #ffe28d; border-radius:10px; padding:10px;}
-
-    table{ width:100%; border-collapse: collapse; margin-top: 18px; font-size: 0.95rem;}
-    th, td{ border:1px solid var(--line); padding:.6rem; text-align:right;}
-    th{ background:#f2fbfc; color:#0b4a4f; font-weight:800;}
-
-    /* グラフラッパー */
-    .chart-block{ margin-top:14px; }
-    .chart-title{ font-size: 16px; font-weight:800; color:var(--navy); margin: 6px 4px; }
-    .chart-wrap{
-      width:100%; height:240px; background:
-        linear-gradient(#ffffff,#ffffff) padding-box,
-        repeating-linear-gradient(0deg, #f2f7fb 0 28px, #e9f1f8 28px 29px) border-box;
-      border:1px solid #dfe8f2; border-radius:12px; padding:10px; overflow:hidden;
-    }
-    .chart-wrap > canvas{ display:block; width:100% !important; height:100% !important; }
-    @media (max-width: 640px){ .chart-wrap{ height:120px; } }
-
-    .rate-input-row{ display:flex; align-items:center; gap:10px; margin-top:8px;}
-    .rate-input-row span{ width:20%; font-size:.95rem; color:var(--muted);}
-    .rate-input-row input{ width:35%; }
-    .note{ font-size:.9rem; color:#3a5066; margin-top:4px}
-    .row-end{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
-    .hint{ font-size:.9rem; color:#3a5066;}
-  </style>
+    .rate-input-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .rate-input-row span { width: 20%; font-size: 0.95rem; color:var(--muted); }
+    .rate-input-row input { width: 35%; }
+    .note{font-size:.9rem;color:var(--muted); margin-top:4px}
+    .row-end{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px;}
+    .hint{font-size:.9rem; color:#334e68;}
+  </style>
 </head>
 <body onload="generateRateInputs()">
-  <div class="title-wrap">
-    <div class="subtitle">金利の変動に対応</div>
-    <h1 class="title">住宅ローンシミュレーター</h1>
-  </div>
+  <h1>🏠 住宅ローンシミュレーター</h1>
 
-  <!-- 条件 -->
-  <div class="card">
-    <div class="panel-title"><span class="chip">1</span>条件</div>
+  <!-- 条件 -->
+  <div class="card">
+    <div class="panel-title">条件</div>
 
-    <!-- ★「借入額（万円）」はパネル見出しの“下” -->
-    <div class="section-title">借入額（万円）</div>
-    <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
-    <!-- 目盛り表示を 1,000万円 / 2億円 -->
-    <div class="range-labels"><span>1,000万円</span><span>2億円</span></div>
-    <input type="range" id="amount-range" min="1000" max="10000" step="10" value="5000" oninput="syncAmountFromRange()" />
+    <div class="section-title">借入額（万円）</div>
+    <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
+    <div class="range-labels"><span>1000</span><span>10000</span></div>
+    <input type="range" id="amount-range" min="1000" max="10000" step="10" value="5000" oninput="syncAmountFromRange()" />
 
-    <div class="section-title">返済期間（年）</div>
-    <input type="number" id="years" value="35" oninput="syncYearsFromInput()" />
-    <!-- 目盛り表示を 1年 / 50年 -->
-    <div class="range-labels"><span>1年</span><span>50年</span></div>
-    <input type="range" id="years-range" min="1" max="50" step="1" value="35" oninput="syncYearsFromRange()" />
+    <div class="section-title">返済期間（年）</div>
+    <input type="number" id="years" value="35" oninput="syncYearsFromInput()" />
+    <div class="range-labels"><span>1</span><span>50</span></div>
+    <input type="range" id="years-range" min="1" max="50" step="1" value="35" oninput="syncYearsFromRange()" />
 
-    <div class="section-title">返済方式</div>
-    <div class="inline-group">
-      <label><input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済</label>
-      <label><input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済</label>
-    </div>
+    <div class="section-title">返済方式</div>
+    <div class="inline-group">
+      <label><input type="radio" name="repaymentType" value="principalAndInterestEqual" checked /> 元利均等返済</label>
+      <label><input type="radio" name="repaymentType" value="principalEqual" /> 元金均等返済</label>
+    </div>
 
-    <!-- 見出し名：金利（％） -->
-    <div class="section-title">金利（％）</div>
-    <div class="inline-group">
-      <input type="number" id="bulk-rate" step="0.01" value="1.00" />
-      <button type="button" class="btn btn-ghost" onclick="applyBulkRate()">すべてに一括入力</button>
-    </div>
-    <div class="inline-group">
-      <select id="from-year"></select>
-      <input type="number" id="from-rate" step="0.01" />
-      <button type="button" class="btn btn-ghost" onclick="applyRateFromYear()">N年目以降に一括入力</button>
-    </div>
+    <div class="section-title">金利（半年ごと）</div>
+    <div class="inline-group">
+      <input type="number" id="bulk-rate" step="0.01" value="1.00" />
+      <button type="button" class="btn btn-ghost" onclick="applyBulkRate()">すべてに一括入力</button>
+    </div>
+    <div class="inline-group">
+      <select id="from-year"></select>
+      <input type="number" id="from-rate" step="0.01" />
+      <button type="button" class="btn btn-ghost" onclick="applyRateFromYear()">N年目以降に一括入力</button>
+    </div>
 
-    <div id="rate-inputs"></div>
+    <div id="rate-inputs"></div>
 
-    <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
-    <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前3ポイント（=1.5年）だけなだらかに近づく」</p>
-    <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
+    <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
+    <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前3ポイント（=1.5年）だけなだらかに近づく」</p>
+    <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
-    <div class="actions">
-      <!-- ★コーラルで目立たせる -->
-      <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
-    </div>
-  </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
+    </div>
+  </div>
 
-  <!-- シミュレーション結果 -->
-  <div class="card">
-    <div class="panel-title"><span class="chip">2</span>シミュレーション結果</div>
-    <div id="result"></div>
+  <!-- シミュレーション結果 -->
+  <div class="card">
+    <div class="panel-title">シミュレーション結果</div>
+    <div id="result"></div>
 
-    <div class="kpi" id="kpiTiles" style="display:none;">
-      <div class="tile"><div class="label">初月の月々返済額</div><div class="value" id="kpi-first"></div></div>
-      <div class="tile"><div class="label">平均の月々返済額</div><div class="value" id="kpi-avg"></div></div>
-      <div class="tile"><div class="label">最大の月々返済額</div><div class="value" id="kpi-max"></div></div>
-    </div>
+    <div class="kpi" id="kpiTiles" style="display:none;">
+      <div class="tile">
+        <div class="label">初月の月々返済額</div>
+        <div class="value" id="kpi-first"></div>
+      </div>
+      <div class="tile">
+        <div class="label">平均の月々返済額</div>
+        <div class="value" id="kpi-avg"></div>
+      </div>
+      <div class="tile">
+        <div class="label">最大の月々返済額</div>
+        <div class="value" id="kpi-max"></div>
+      </div>
+    </div>
 
-    <div class="chart-block">
-      <div class="chart-title">月々の支払額</div>
-      <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
-    </div>
-    <div class="chart-block">
-      <div class="chart-title">支払内訳（元金/利息）</div>
-      <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
-    </div>
+    <div class="chart-block">
+      <div class="chart-title">月々の支払額</div>
+      <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">支払内訳（元金/利息）</div>
+      <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
+    </div>
 
-    <div class="row-end">
-      <label class="hint"><input type="checkbox" id="toggle-table" checked> 明細テーブルを表示</label>
-      <span class="hint">※オフにすると軽くなります</span>
-    </div>
-    <div id="repayment-table"></div>
+    <div class="row-end">
+      <label class="hint"><input type="checkbox" id="toggle-table" checked> 明細テーブルを表示</label>
+      <span class="hint">※オフにすると軽くなります</span>
+    </div>
+    <div id="repayment-table"></div>
 
-    <div class="actions">
-      <button class="btn btn-ghost" onclick="downloadExcel()">📥 シミュレーション結果をExcelで保存</button>
-    </div>
-  </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="downloadExcel()">📥 シミュレーション結果をExcelで保存</button>
+    </div>
+  </div>
 
-  <script>
-  // ========= グローバル =========
-  let lastSimData = [];
-  let rateChartInstance = null;
-  let paymentChart = null, stackedChart = null;
+  <script>
+  // ========= グローバル =========
+  let lastSimData = [];
+  let rateChartInstance = null;
+  let paymentChart = null, stackedChart = null;
 
-  // ========= 入出力同期（万円） =========
-  function syncAmountFromRange() {
-    const val = parseInt(document.getElementById('amount-range').value);
-    document.getElementById('amount').value = val.toLocaleString();
-  }
-  function syncAmountFromText() {
-    const raw = document.getElementById('amount').value.replace(/[^\d]/g, '');
-    const num = parseInt(raw || '0');
-    document.getElementById('amount-range').value = num;
-    document.getElementById('amount').value = num.toLocaleString();
-  }
-  function syncYearsFromRange() {
-    const val = parseInt(document.getElementById('years-range').value);
-    document.getElementById('years').value = val;
-    generateRateInputs();
-  }
-  function syncYearsFromInput() {
-    const val = parseInt(document.getElementById('years').value);
-    document.getElementById('years-range').value = val;
-    generateRateInputs();
-  }
-  function parseAmount(v) { return parseFloat(v.replace(/,/g, '')) * 10000; } // 万円 → 円
+  // ========= 入出力同期（万円） =========
+  function syncAmountFromRange() {
+    const val = parseInt(document.getElementById('amount-range').value);
+    document.getElementById('amount').value = val.toLocaleString();
+  }
+  function syncAmountFromText() {
+    const raw = document.getElementById('amount').value.replace(/[^\d]/g, '');
+    const num = parseInt(raw || '0');
+    document.getElementById('amount-range').value = num;
+    document.getElementById('amount').value = num.toLocaleString();
+  }
+  function syncYearsFromRange() {
+    const val = parseInt(document.getElementById('years-range').value);
+    document.getElementById('years').value = val;
+    generateRateInputs();
+  }
+  function syncYearsFromInput() {
+    const val = parseInt(document.getElementById('years').value);
+    document.getElementById('years-range').value = val;
+    generateRateInputs();
+  }
+  function parseAmount(v) { return parseFloat(v.replace(/,/g, '')) * 10000; } // 万円 → 円
 
-  // ========= 金利入力生成 =========
-  function generateRateInputs() {
-    const container = document.getElementById('rate-inputs');
-    container.innerHTML = '';
-    const years = parseInt(document.getElementById('years').value);
-    const fromYearSelect = document.getElementById('from-year');
-    fromYearSelect.innerHTML = '';
+  // ========= 金利入力生成 =========
+  function generateRateInputs() {
+    const container = document.getElementById('rate-inputs');
+    container.innerHTML = '';
+    const years = parseInt(document.getElementById('years').value);
+    const fromYearSelect = document.getElementById('from-year');
+    fromYearSelect.innerHTML = '';
 
-    for (let y = 1; y <= years; y++) {
-      const option = document.createElement('option');
-      option.value = y; option.textContent = `${y} 年目以降`; fromYearSelect.appendChild(option);
+    for (let y = 1; y <= years; y++) {
+      const option = document.createElement('option');
+      option.value = y; option.textContent = `${y} 年目以降`; fromYearSelect.appendChild(option);
 
-      const row = document.createElement('div'); row.className = 'rate-input-row';
-      const label = document.createElement('span'); label.textContent = `${y}年目`;
-      const input1 = document.createElement('input'); const input2 = document.createElement('input');
-      [input1, input2].forEach((input, i) => {
-        input.type = 'number'; input.step = '0.01'; input.value = '1.00'; input.className = 'rate-input';
-        input.dataset.index = (y - 1) * 2 + i; input.addEventListener('input', updateRateChartFromInputs);
-      });
-      row.appendChild(label); row.appendChild(input1); row.appendChild(input2); container.appendChild(row);
-    }
-    drawRateChart();
-  }
+      const row = document.createElement('div'); row.className = 'rate-input-row';
+      const label = document.createElement('span'); label.textContent = `${y}年目`;
+      const input1 = document.createElement('input'); const input2 = document.createElement('input');
+      [input1, input2].forEach((input, i) => {
+        input.type = 'number'; input.step = '0.01'; input.value = '1.00'; input.className = 'rate-input';
+        input.dataset.index = (y - 1) * 2 + i; input.addEventListener('input', updateRateChartFromInputs);
+      });
+      row.appendChild(label); row.appendChild(input1); row.appendChild(input2); container.appendChild(row);
+    }
+    drawRateChart();
+  }
 
-  // ========= 入力 → グラフ反映 =========
-  function updateRateChartFromInputs() {
-    const inputs = Array.from(document.querySelectorAll('.rate-input'));
-    const rates = inputs.map(el => parseFloat(el.value) || 0);
-    if (rateChartInstance) {
-      rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
-      rateChartInstance.data.datasets[0].data = rates;
-      rateChartInstance.update();
-    }
-  }
+  // ========= 入力 → グラフ反映 =========
+  function updateRateChartFromInputs() {
+    const inputs = Array.from(document.querySelectorAll('.rate-input'));
+    const rates = inputs.map(el => parseFloat(el.value) || 0);
+    if (rateChartInstance) {
+      // ラベルは「N年目」
+      rateChartInstance.data.labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
+      rateChartInstance.data.datasets[0].data = rates;
+      rateChartInstance.update();
+    }
+  }
 
-  // ========= グラフ → 入力反映 =========
-  function updateInputsFromRateChart(rates) {
-    const inputs = document.querySelectorAll('.rate-input');
-    rates.forEach((r, i) => { inputs[i].value = parseFloat(r).toFixed(2); });
-    simulate(); // グラフ変更時は即再計算
-  }
+  // ========= グラフ → 入力反映 =========
+  function updateInputsFromRateChart(rates) {
+    const inputs = document.querySelectorAll('.rate-input');
+    rates.forEach((r, i) => { inputs[i].value = parseFloat(r).toFixed(2); });
+    simulate(); // グラフ変更時は即再計算
+  }
 
-  // ========= 金利一括適用 =========
-  function applyBulkRate() {
-    const rate = parseFloat(document.getElementById('bulk-rate').value);
-    if (isNaN(rate)) return alert('有効な金利を入力してください。');
-    document.querySelectorAll('.rate-input').forEach(inp => inp.value = rate.toFixed(2));
-    updateRateChartFromInputs();
-  }
-  function applyRateFromYear() {
-    const fromYear = parseInt(document.getElementById('from-year').value);
-    const rate = parseFloat(document.getElementById('from-rate').value);
-    if (isNaN(rate)) return alert('有効な金利を入力してください。');
-    const inputs = document.querySelectorAll('.rate-input');
-    const startIndex = (fromYear - 1) * 2;
-    for (let i = startIndex; i < inputs.length; i++) inputs[i].value = rate.toFixed(2);
-    updateRateChartFromInputs();
-  }
+  // ========= 金利一括適用 =========
+  function applyBulkRate() {
+    const rate = parseFloat(document.getElementById('bulk-rate').value);
+    if (isNaN(rate)) return alert('有効な金利を入力してください。');
+    document.querySelectorAll('.rate-input').forEach(inp => inp.value = rate.toFixed(2));
+    updateRateChartFromInputs();
+  }
+  function applyRateFromYear() {
+    const fromYear = parseInt(document.getElementById('from-year').value);
+    const rate = parseFloat(document.getElementById('from-rate').value);
+    if (isNaN(rate)) return alert('有効な金利を入力してください。');
+    const inputs = document.querySelectorAll('.rate-input');
+    const startIndex = (fromYear - 1) * 2;
+    for (let i = startIndex; i < inputs.length; i++) inputs[i].value = rate.toFixed(2);
+    updateRateChartFromInputs();
+  }
 
-  // ========= ドラッグ対応グラフ（X軸=1年置き／Y最大8%） =========
-  function drawRateChart() {
-    const inputs = Array.from(document.querySelectorAll('.rate-input'));
-    const rates = inputs.map(el => parseFloat(el.value) || 0);
+  // ========= ドラッグ対応グラフ =========
+  function drawRateChart() {
+    const inputs = Array.from(document.querySelectorAll('.rate-input'));
+    const rates = inputs.map(el => parseFloat(el.value) || 0);
+    const labels = rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`);
 
-    const ctx = document.getElementById('rateChart').getContext('2d');
-    if (rateChartInstance) rateChartInstance.destroy();
+    const ctx = document.getElementById('rateChart').getContext('2d');
+    if (rateChartInstance) rateChartInstance.destroy();
 
-    rateChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: rates.map((_, i) => `${Math.floor(i / 2) + 1}年目`),
-        datasets: [{
-          label: '半年ごとの金利（％）',
-          data: rates,
-          borderColor: '#0c7e86',
-          backgroundColor: 'rgba(12,126,134,0.12)',
-          pointRadius: 4,
-          pointHoverRadius: 7,
-          pointHitRadius: 14,
-          borderWidth: 3,
-          tension: 0.2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        scales: {
-          x: {
-            grid: { display: false },
-            title: { display: true, text: '何年目', color:'#0e2a47', font:{weight:'bold'} },
-            ticks: {
-              autoSkip: false,
-              maxRotation: 0,
-              font: { size: 14 },
-              callback: (value, index) => {
-                // 1年ごと（2点ごと）に「1,2,3…」を表示
-                if (index % 2 === 1) return Math.floor(index / 2) + 1;
-                return '';
-              }
-            }
-          },
-          y: {
-            beginAtZero: true,
-            min: 0,
-            max: 8,
-            grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: { font: { size: 14 }, callback: v => Number(v).toFixed(1) + '%' }
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor:'#0e2a47', titleColor:'#fff', bodyColor:'#fff',
-            callbacks: {
-              title: (items)=> {
-                const i = items[0].dataIndex;
-                return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`;
-              },
-              label: ctx => `金利: ${Number(ctx.parsed.y).toFixed(2)}%`
-            }
-          },
-          dragData: {
-            round: 2,
-            showTooltip: true,
-            onDragEnd: function (e, datasetIndex, index, value) {
-              // 0〜8%にクランプ
-              value = Math.max(0, Math.min(8, value));
-              const oldData = rateChartInstance.data.datasets[0].data;
-              const newRates = [...oldData];
-              const len = newRates.length;
-              const SMOOTH_PRE_RANGE = 3; // 直前3ポイント
+    rateChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: '半年ごとの金利（％）',
+          data: rates,
+          borderColor: '#ff7f0e',
+          backgroundColor: 'rgba(255,127,14,0.12)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointHitRadius: 14,
+          borderWidth: 3,
+          tension: 0.15
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              maxRotation: 0,
+              font: { size: 14 },
+              callback: (value, index, ticks) => {
+                const total = ticks.length;
+                const every = Math.max(1, Math.floor(total / (window.innerWidth < 640 ? 8 : 12)));
+                return (index % every === 0) ? labels[index] : '';
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            suggestedMax: 5,
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: {
+              font: { size: 14 },
+              callback: v => Number(v).toFixed(1) + '%'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: ctx => labels[ctx[0].dataIndex],
+              label: ctx => `金利: ${Number(ctx.parsed.y).toFixed(2)}%`
+            }
+          },
+          dragData: {
+            round: 2,
+            showTooltip: true,
+            onDragEnd: function (e, datasetIndex, index, value) {
+              const oldData = rateChartInstance.data.datasets[0].data;
+              const newRates = [...oldData];
+              const len = newRates.length;
+              const SMOOTH_PRE_RANGE = 3; // 直前3ポイント（=1.5年）
 
-              // 以降は同じ値
-              for (let i = index; i < len; i++) newRates[i] = value;
-              // 直前だけなだらかに
-              const start = Math.max(0, index - SMOOTH_PRE_RANGE);
-              const span = index - start;
-              if (span > 0) {
-                for (let i = start; i < index; i++) {
-                  const t = (i - start + 1) / span;
-                  newRates[i] = oldData[i] * (1 - t) + value * t;
-                }
-              }
-              updateInputsFromRateChart(newRates);
-              rateChartInstance.data.datasets[0].data = newRates;
-              rateChartInstance.update();
-            }
-          }
-        }
-      },
-      plugins: [Chart.registry.getPlugin('dragdata')]
-    });
-  }
+              // 以降を同じ値に固定
+              for (let i = index; i < len; i++) newRates[i] = value;
+              // 直前3ポイントだけ線形でなだらかに
+              const start = Math.max(0, index - SMOOTH_PRE_RANGE);
+              const span = index - start;
+              if (span > 0) {
+                for (let i = start; i < index; i++) {
+                  const t = (i - start + 1) / span;
+                  newRates[i] = oldData[i] * (1 - t) + value * t;
+                }
+              }
+              updateInputsFromRateChart(newRates);
+              rateChartInstance.data.datasets[0].data = newRates;
+              rateChartInstance.update();
+            }
+          }
+        }
+      },
+      plugins: [Chart.registry.getPlugin('dragdata')]
+    });
+  }
 
-  // ========= シミュレーション（ルールなし） =========
-  function simulate() {
-    const amount = parseAmount(document.getElementById('amount').value); // 円
-    const years = parseInt(document.getElementById('years').value);
-    const months = years * 12;
-    const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
-    const rates = Array.from(document.querySelectorAll('.rate-input')).map(el => parseFloat(el.value) / 100);
+  // ========= シミュレーション（ルールなし） =========
+  function simulate() {
+    const amount = parseAmount(document.getElementById('amount').value); // 円
+    const years = parseInt(document.getElementById('years').value);
+    const months = years * 12;
+    const repaymentType = document.querySelector("input[name='repaymentType']:checked").value;
+    const rates = Array.from(document.querySelectorAll('.rate-input')).map(el => parseFloat(el.value) / 100);
 
-    if (!amount || !years) { alert('借入額と返済期間を入力してください。'); return; }
-    if (rates.length < Math.ceil(months / 6)) { alert('金利の入力が不足しています。'); return; }
+    if (!amount || !years) { alert('借入額と返済期間を入力してください。'); return; }
+    if (rates.length < Math.ceil(months / 6)) { alert('金利の入力が不足しています。'); return; }
 
-    let balance = amount;
-    const result = [];
-    const payments = [];
-    let totalPrincipal = 0, totalInterest = 0;
+    let balance = amount;
+    const result = [];
+    const payments = [];
+    let totalPrincipal = 0, totalInterest = 0;
 
-    for (let m = 0; m < months; m++) {
-      const rateIdx = Math.floor(m / 6);
-      const annualRate = rates[rateIdx] || 0;
-      const r = annualRate / 12;
-      const remain = months - m;
+    for (let m = 0; m < months; m++) {
+      const rateIdx = Math.floor(m / 6);
+      const annualRate = rates[rateIdx] || 0;      // 年利(小数)
+      const r = annualRate / 12;                   // 月利
+      const remain = months - m;
 
-      let interest = balance * r;
-      let principal, paymentOut;
+      let interest = balance * r;
+      let principal, paymentOut;
 
-      if (repaymentType === 'principalAndInterestEqual') {
-        paymentOut = r > 0
-          ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
-          : balance / remain;
-        interest = balance * r;
-        principal = paymentOut - interest;
-      } else {
-        principal = amount / months;
-        interest = balance * r;
-        paymentOut = principal + interest;
-      }
+      if (repaymentType === 'principalAndInterestEqual') {
+        // ルールなし：毎月その月の金利＆残期間で理論返済額を再計算
+        paymentOut = r > 0
+          ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
+          : balance / remain;
+        interest = balance * r;
+        principal = paymentOut - interest;
+      } else {
+        principal = amount / months;
+        interest = balance * r;
+        paymentOut = principal + interest;
+      }
 
-      balance -= principal;
-      if (balance < 0) balance = 0;
-      totalPrincipal += principal;
-      totalInterest += interest;
-      payments.push(paymentOut);
+      balance -= principal;
+      if (balance < 0) balance = 0;
+      totalPrincipal += principal;
+      totalInterest += interest;
+      payments.push(paymentOut);
 
-      result.push({
-        月: m + 1,
-        元金: Math.round(principal),
-        利息: Math.round(interest),
-        残高: Math.round(balance),
-        支払額: Math.round(paymentOut)
-      });
-    }
+      result.push({
+        月: m + 1,
+        元金: Math.round(principal),
+        利息: Math.round(interest),
+        残高: Math.round(balance),
+        支払額: Math.round(paymentOut)
+      });
+    }
 
-    lastSimData = result;
-    displayResult(result, totalPrincipal, totalInterest, payments);
-    drawCharts(result);
-  }
+    lastSimData = result;
+    displayResult(result, totalPrincipal, totalInterest, payments);
+    drawCharts(result);
+  }
 
-  // ========= 結果表示 =========
-  function displayResult(data, totalPrincipal, totalInterest, payments) {
-    const totalRepayment = Math.ceil(totalPrincipal + totalInterest);
-    const interestRounded = Math.ceil(totalInterest);
-    const firstPay = Math.round(payments[0] || 0);
-    const avgPay = Math.round(payments.reduce((a,b)=>a+b,0) / payments.length || 0);
-    const maxPay = Math.round(Math.max(...payments, 0));
+  // ========= 結果表示（総額＋月の返済額KPI） =========
+  function displayResult(data, totalPrincipal, totalInterest, payments) {
+    const totalRepayment = Math.ceil(totalPrincipal + totalInterest); // 総返済額：切り上げ
+    const interestRounded = Math.ceil(totalInterest);                 // 総利息：切り上げ
+    const firstPay = Math.round(payments[0] || 0);
+    const avgPay = Math.round(payments.reduce((a,b)=>a+b,0) / payments.length || 0);
+    const maxPay = Math.round(Math.max(...payments, 0));
 
-    const div = document.getElementById('result');
-    div.innerHTML = `🏁 総返済額: ${totalRepayment.toLocaleString()} 円\n📊 総利息: ${interestRounded.toLocaleString()} 円`;
+    const div = document.getElementById('result');
+    div.innerHTML = `🏁 総返済額: ${totalRepayment.toLocaleString()} 円\n📊 総利息: ${interestRounded.toLocaleString()} 円`;
 
-    document.getElementById('kpiTiles').style.display = 'grid';
-    document.getElementById('kpi-first').textContent = `${firstPay.toLocaleString()} 円`;
-    document.getElementById('kpi-avg').textContent   = `${avgPay.toLocaleString()} 円`;
-    document.getElementById('kpi-max').textContent   = `${maxPay.toLocaleString()} 円`;
+    // KPIタイル
+    document.getElementById('kpiTiles').style.display = 'grid';
+    document.getElementById('kpi-first').textContent = `${firstPay.toLocaleString()} 円`;
+    document.getElementById('kpi-avg').textContent   = `${avgPay.toLocaleString()} 円`;
+    document.getElementById('kpi-max').textContent   = `${maxPay.toLocaleString()} 円`;
 
-    const showTable = document.getElementById('toggle-table').checked;
-    const tableWrap = document.getElementById('repayment-table');
-    tableWrap.innerHTML = '';
-    if (showTable) {
-      const table = document.createElement('table');
-      const thead = table.createTHead();
-      const tbody = table.createTBody();
-      thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
-    
+    // 明細テーブル（必要時のみ）
+    const showTable = document.getElementById('toggle-table').checked;
+    const tableWrap = document.getElementById('repayment-table');
+    tableWrap.innerHTML = '';
+    if (showTable) {
+      const table = document.createElement('table');
+      const thead = table.createTHead();
+      const tbody = table.createTBody();
+      thead.innerHTML = '<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
+      for (let i=0;i<data.length;i++){
+        const row = data[i];
+        const tr = tbody.insertRow();
+        const cols = ['月','元金','利息','支払額','残高'];
+        for (let c=0;c<cols.length;c++){
+          const td = tr.insertCell();
+          td.textContent = row[cols[c]].toLocaleString();
+        }
+      }
+      tableWrap.appendChild(table);
+    }
+  }
+
+  // ========= グラフ描画（下2つ：Y軸の最小値を0に固定） =========
+  function drawCharts(data) {
+    const labels = data.map(d => d['月']);
+    const principalData = data.map(d => d['元金']);
+    const interestData = data.map(d => d['利息']);
+    const paymentData = data.map(d => d['支払額']);
+
+    if (paymentChart) paymentChart.destroy();
+    if (stackedChart) stackedChart.destroy();
+
+    const axisFont = { size: 14 };
+    const common = {
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      scales: {
+        x: { ticks: { maxRotation:0, autoSkip:true, autoSkipPadding:16, font:axisFont }, grid:{display:false} },
+        y: { 
+          ticks: { font:axisFont }, 
+          grid:{ color:'rgba(0,0,0,0.08)' },
+          beginAtZero: true,
+          min: 0
+        }
+      },
+      plugins: { legend:{display:false} }
+    };
+
+    paymentChart = new Chart(document.getElementById('paymentChart').getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: '月々の支払額', data: paymentData, backgroundColor: '#3fa7ff' }] },
+      options: common
+    });
+    stackedChart = new Chart(document.getElementById('stackedChart').getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: '元金', data: principalData, backgroundColor: '#4CAF50' },
+        { label: '利息', data: interestData, backgroundColor: '#FF9800' }
+      ] },
+      options: { 
+        ...common, 
+        scales: { 
+          ...common.scales, 
+          x:{ ...common.scales.x, stacked:true }, 
+          y:{ ...common.scales.y, stacked:true, beginAtZero:true, min:0 }
+        } 
+      }
+    });
+  }
+
+  // ========= Excel出力 =========
+  function downloadExcel() {
+    if (!lastSimData.length) { alert('まずシミュレーションを実行してください。'); return; }
+    const ws = XLSX.utils.json_to_sheet(lastSimData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '返済シミュレーション');
+    XLSX.writeFile(wb, 'loan_simulation.xlsx');
+  }
+
+  // テーブル表示トグル時は再描画のみ
+  document.addEventListener('change', (e)=>{
+    if (e.target && e.target.id === 'toggle-table' && lastSimData.length){
+      let totalPrincipal=0,totalInterest=0;
+      for(const r of lastSimData){ totalPrincipal+=r['元金']; totalInterest+=r['利息']; }
+      const payments = lastSimData.map(r=>r['支払額']);
+      displayResult(lastSimData, totalPrincipal, totalInterest, payments);
+    }
+  });
+  </script>
+</body>
+</html>
