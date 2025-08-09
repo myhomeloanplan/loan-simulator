@@ -22,7 +22,6 @@
       --muted:#5f6f84;
       --ring:rgba(16,147,154,.25);
       --line:#e6edf5;
-      /* 目立つボタン色（コーラル系） */
       --coral:#ff4d6d;
       --coral-2:#ff6b81;
     }
@@ -36,11 +35,9 @@
 
     /* タイトルエリア */
     .title-wrap{ text-align:center; margin:6px 0 10px;}
-    /* サブタイトルを“上”に。黄色ハイライト風（背景になじむ） */
+    /* ★サブタイトル＝タイトルの上。背景・枠なし（背景に馴染む） */
     .subtitle{
       display:inline-block; margin-bottom:8px; font-weight:800; color:#0d3a57; letter-spacing:.08em;
-      background:linear-gradient(0deg, #fff3c4 0%, #fff3c4 100%);
-      padding:.25rem .65rem; border-radius:6px; border:1px solid rgba(0,0,0,.06);
     }
     .subtitle::before{ content:"＼ "; }
     .subtitle::after{ content:" ／"; }
@@ -52,13 +49,14 @@
       border: 1px solid #eef3f9;
       position: relative;
     }
-    /* ピル型見出し（①条件 / ②シミュレーション結果） */
+    /* ★ピル見出しはブロック化（次の要素を必ず下段へ） */
     .panel-title{
-      display:inline-flex; align-items:center; gap:.5rem; margin:-6px 0 14px; font-weight:900; color:var(--navy);
+      display:flex; align-items:center; gap:.5rem; margin:-6px 0 14px; font-weight:900; color:var(--navy);
       background:linear-gradient(90deg, var(--yellow), var(--yellow-2));
       padding:.45rem .9rem; border-radius:999px; border:1px solid rgba(0,0,0,.06);
       box-shadow: 0 4px 0 rgba(15,48,87,.08);
       font-size: 18px;
+      width: fit-content;
     }
     .panel-title .chip{
       display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:999px;
@@ -68,10 +66,11 @@
 
     /* 斜線背景の小見出し */
     .section-title{
-      font-weight:900; font-size:16px; color:var(--navy); margin:18px 0 8px; display:inline-block; padding:.35rem .7rem;
-      background:
-        repeating-linear-gradient(-45deg, rgba(255,216,97,.35) 0 6px, rgba(255,216,97,.22) 6px 12px);
+      font-weight:900; font-size:16px; color:var(--navy); margin:18px 0 8px; padding:.35rem .7rem;
+      background: repeating-linear-gradient(-45deg, rgba(255,216,97,.35) 0 6px, rgba(255,216,97,.22) 6px 12px);
       border-radius:8px;
+      display:block;   /* ★必ず改行させる */
+      width: fit-content;
     }
 
     .range-labels{ display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin:4px 0 8px;}
@@ -94,12 +93,10 @@
       font-size: calc(1rem + 2pt);
     }
     .btn:active{ transform: translateY(1px); }
-    /* 目立つコーラル色に変更 */
+    /* 目立つコーラル色 */
     .btn-primary{
-      color:#fff;
-      background: linear-gradient(135deg, var(--coral), var(--coral-2));
-      border:1px solid rgba(0,0,0,.12);
-      box-shadow: 0 10px 22px rgba(255,77,109,.35);
+      color:#fff; background: linear-gradient(135deg, var(--coral), var(--coral-2));
+      border:1px solid rgba(0,0,0,.12); box-shadow: 0 10px 22px rgba(255,77,109,.35);
     }
     .btn-primary:hover{ filter:brightness(1.05); }
     .btn-ghost{
@@ -147,7 +144,7 @@
   <div class="card">
     <div class="panel-title"><span class="chip">1</span>条件</div>
 
-    <!-- ★「借入額（万円）」はパネル見出しの“下”に配置 -->
+    <!-- ★「借入額（万円）」はパネル見出しの“下” -->
     <div class="section-title">借入額（万円）</div>
     <input type="text" id="amount" value="5000" oninput="syncAmountFromText()" />
     <!-- 目盛り表示を 1,000万円 / 2億円 -->
@@ -185,7 +182,7 @@
     <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
     <div class="actions">
-      <!-- ★目立つコーラル色に変更 -->
+      <!-- ★コーラルで目立たせる -->
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
     </div>
   </div>
@@ -309,7 +306,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（X軸=1年置きの数値・軸ラベル／Y最大8%） =========
+  // ========= ドラッグ対応グラフ（X軸=1年置き／Y最大8%） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -355,7 +352,7 @@
           y: {
             beginAtZero: true,
             min: 0,
-            max: 8, /* 最大8% */
+            max: 8,
             grid: { color: 'rgba(0,0,0,0.08)' },
             ticks: { font: { size: 14 }, callback: v => Number(v).toFixed(1) + '%' }
           }
