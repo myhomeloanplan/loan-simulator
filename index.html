@@ -172,7 +172,7 @@
     <div id="rate-inputs"></div>
 
     <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
-    <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前3ポイント（=1.5年）だけなだらかに近づく」</p>
+    <p class="note">点をドラッグすると「その点以降は同じ金利」「それ以前は直前2ポイント（=1年）だけなだらかに近づく」</p>
     <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
     <div class="actions">
@@ -313,9 +313,9 @@
               onDragStart:(e)=>{ if(e&&e.native&&e.native.preventDefault) e.native.preventDefault(); document.body.style.touchAction='none'; },
               onDragEnd:(e,di,index,value)=>{
                 document.body.style.touchAction='auto';
-                const old=rateChartInstance.data.datasets[0].data, newRates=[...old], len=newRates.length, PRE=3;
+                const old=rateChartInstance.data.datasets[0].data, newRates=[...old], len=newRates.length, PRE=2;
                 for(let i=index;i<len;i++) newRates[i]=value;           // 以降は同じ
-                const start=Math.max(0,index-PRE), span=index-start;     // 直前3点はなだらか
+                const start=Math.max(0,index-PRE), span=index-start;     // 直前2点はなだらか
                 if(span>0){ for(let i=start;i<index;i++){ const t=(i-start+1)/span; newRates[i]=old[i]*(1-t)+value*t; } }
                 updateInputsFromRateChart(newRates);
                 rateChartInstance.data.datasets[0].data=newRates;
