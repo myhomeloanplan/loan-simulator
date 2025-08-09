@@ -107,17 +107,18 @@
     th, td{ border:1px solid var(--line); padding:.6rem; text-align:right;}
     th{ background:#f2fbfc; color:#0b4a4f; font-weight:800;}
 
-    /* グラフラッパー */
+    /* グラフラッパー（縦 1.5倍） */
     .chart-block{ margin-top:14px; }
     .chart-title{ font-size: 16px; font-weight:800; color:var(--navy); margin: 6px 4px; }
     .chart-wrap{
-      width:100%; height:240px; background:
+      width:100%; height:360px; /* ← 元240pxの1.5倍 */
+      background:
         linear-gradient(#ffffff,#ffffff) padding-box,
         repeating-linear-gradient(0deg, #f2f7fb 0 28px, #e9f1f8 28px 29px) border-box;
       border:1px solid #dfe8f2; border-radius:12px; padding:10px; overflow:hidden;
     }
     .chart-wrap > canvas{ display:block; width:100% !important; height:100% !important; }
-    @media (max-width: 640px){ .chart-wrap{ height:120px; } }
+    @media (max-width: 640px){ .chart-wrap{ height:180px; } } /* ← 元120pxの1.5倍 */
 
     /* 半年ごとの金利入力（復活） */
     #rate-inputs{ display:grid; grid-template-columns: 1fr; gap:6px; margin-top:6px; }
@@ -169,7 +170,7 @@
       <button type="button" class="btn btn-ghost" onclick="applyRateFromYear()">N年目以降に一括入力</button>
     </div>
 
-    <!-- ★半年ごとの金利テキストボックス（復活） -->
+    <!-- 半年ごとの金利テキストボックス -->
     <div id="rate-inputs"></div>
 
     <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
@@ -300,7 +301,7 @@
     updateRateChartFromInputs();
   }
 
-  // ========= ドラッグ対応グラフ（X軸=1年置き／Y最大8%） =========
+  // ========= ドラッグ対応グラフ（X=1年置き／Y最大6%・0.5%刻み） =========
   function drawRateChart() {
     const inputs = Array.from(document.querySelectorAll('.rate-input'));
     const rates = inputs.map(el => parseFloat(el.value) || 0);
@@ -340,9 +341,15 @@
             }
           },
           y: {
-            beginAtZero: true, min: 0, max: 8,
+            beginAtZero: true,
+            min: 0,
+            max: 6,               // ← 最大6%
             grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: { font: { size: 14 }, callback: v => Number(v).toFixed(1) + '%' }
+            ticks: {
+              font: { size: 14 },
+              stepSize: 0.5,      // ← 0.5%刻み
+              callback: v => Number(v).toFixed(1) + '%'
+            }
           }
         },
         plugins: {
@@ -361,7 +368,7 @@
             round: 2,
             showTooltip: true,
             onDragEnd: function (e, datasetIndex, index, value) {
-              value = Math.max(0, Math.min(8, value)); // 0〜8%に制限
+              value = Math.max(0, Math.min(6, value)); // 0〜6%に制限
               const oldData = rateChartInstance.data.datasets[0].data;
               const newRates = [...oldData];
               const len = newRates.length;
