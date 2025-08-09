@@ -145,11 +145,12 @@
 
     <div class="section-title">金利（％）</div>
 
-    <!-- コンパクト金利ツールバー（詰め・%付き・見切れ対策） -->
+    <!-- コンパクト金利ツールバー -->
     <div class="rate-toolbar">
       <div class="rate-field">
         <button type="button" class="icon-btn" aria-label="金利を0.05下げる" onclick="adjustRate(-0.05)">−</button>
-        <input type="number" id="bulkRateUnified" class="rate-input" step="0.01" value="1.15" />
+        <!-- 一括入力は bulk-rate-input として区別 -->
+        <input type="number" id="bulkRateUnified" class="rate-input bulk-rate-input" step="0.01" value="1.15" />
         <span class="rate-suffix">%</span>
         <button type="button" class="icon-btn" aria-label="金利を0.05上げる" onclick="adjustRate(0.05)">＋</button>
       </div>
@@ -214,7 +215,7 @@
       const container=document.getElementById('rate-inputs'); container.innerHTML='';
       const years=+document.getElementById('years').value;
       const scope=document.getElementById('applyScope'); scope.innerHTML='';
-      // 「全期間」に変更
+      // 「全期間」
       const optAll=document.createElement('option'); optAll.value='all'; optAll.textContent='全期間'; scope.appendChild(optAll);
       for(let y=1;y<=years;y++){ const o=document.createElement('option'); o.value=String(y); o.textContent=`${y}年目以降`; scope.appendChild(o); }
 
@@ -222,14 +223,21 @@
         const row=document.createElement('div'); row.className='rate-input-row';
         const label=document.createElement('span'); label.textContent=`${y}年目`;
         const input1=document.createElement('input'); const input2=document.createElement('input');
-        [input1,input2].forEach((inp,i)=>{ inp.type='number'; inp.step='0.01'; inp.value='1.15'; inp.className='rate-input'; inp.dataset.index=(y-1)*2+i; inp.addEventListener('input',updateRateChartFromInputs);});
+        [input1,input2].forEach((inp,i)=>{
+          inp.type='number'; inp.step='0.01'; inp.value='1.15';
+          // 半年入力は専用クラスを付与（見た目維持のため rate-input も併記）
+          inp.className='rate-input half-rate-input';
+          inp.dataset.index=(y-1)*2+i;
+          inp.addEventListener('input',updateRateChartFromInputs);
+        });
         row.appendChild(label); row.appendChild(input1); row.appendChild(input2); container.appendChild(row);
       }
       drawRateChart();
     }
 
+    // 入力欄 → グラフ
     function updateRateChartFromInputs(){
-      const inputs=[...document.querySelectorAll('.rate-input')];
+      const inputs=[...document.querySelectorAll('.half-rate-input')];
       const rates=inputs.map(el=>parseFloat(el.value)||0);
       if(rateChartInstance){
         rateChartInstance.data.labels=rates.map((_,i)=>`${Math.floor(i/2)+1}年目`);
@@ -237,9 +245,11 @@
         rateChartInstance.update();
       }
     }
+
+    // グラフ → 入力欄
     function updateInputsFromRateChart(rates){
-      const inputs=document.querySelectorAll('.rate-input');
-      rates.forEach((r,i)=>{ inputs[i].value=parseFloat(r).toFixed(2); });
+      const inputs=document.querySelectorAll('.half-rate-input');
+      rates.forEach((r,i)=>{ if(inputs[i]) inputs[i].value=Number(r).toFixed(2); });
       simulate();
     }
 
@@ -248,17 +258,25 @@
       const el=document.getElementById('bulkRateUnified');
       let v=parseFloat(el.value||'0'); v = clamp06( Math.round((v+delta)*100)/100 ); el.value=v.toFixed(2);
     }
+
+    // 一括適用（対象は .half-rate-input のみ）
     function applyRateUnified(){
-      const rate=parseFloat(document.getElementById('bulkRateUnified').value); if(isNaN(rate)) return alert('有効な金利を入力してください。');
-      const scopeVal=document.getElementById('applyScope').value; const inputs=document.querySelectorAll('.rate-input');
+      const rate=parseFloat(document.getElementById('bulkRateUnified').value);
+      if(isNaN(rate)) return alert('有効な金利を入力してください。');
+      const scopeVal=document.getElementById('applyScope').value;
+      const inputs=[...document.querySelectorAll('.half-rate-input')];
       if(scopeVal==='all'){ inputs.forEach(inp=>inp.value=rate.toFixed(2)); }
-      else{ const fromYear=parseInt(scopeVal); const start=(fromYear-1)*2; for(let i=start;i<inputs.length;i++) inputs[i].value=rate.toFixed(2); }
+      else{
+        const fromYear=parseInt(scopeVal,10);
+        const start=(fromYear-1)*2;
+        for(let i=start;i<inputs.length;i++) inputs[i].value=rate.toFixed(2);
+      }
       updateRateChartFromInputs();
     }
 
     // ドラッグ編集：Y 0〜6%、目盛0.5%
     function drawRateChart(){
-      const inputs=[...document.querySelectorAll('.rate-input')];
+      const inputs=[...document.querySelectorAll('.half-rate-input')];
       const rates=inputs.map(el=>parseFloat(el.value)||0);
       const ctx=document.getElementById('rateChart').getContext('2d');
       if(rateChartInstance) rateChartInstance.destroy();
@@ -288,10 +306,12 @@
               onDragEnd:(e,di,index,value)=>{
                 document.body.style.touchAction='auto';
                 const old=rateChartInstance.data.datasets[0].data, newRates=[...old], len=newRates.length, PRE=3;
-                for(let i=index;i<len;i++) newRates[i]=value;
-                const start=Math.max(0,index-PRE), span=index-start;
+                for(let i=index;i<len;i++) newRates[i]=value;           // 以降は同じ
+                const start=Math.max(0,index-PRE), span=index-start;     // 直前3点はなだらか
                 if(span>0){ for(let i=start;i<index;i++){ const t=(i-start+1)/span; newRates[i]=old[i]*(1-t)+value*t; } }
-                updateInputsFromRateChart(newRates); rateChartInstance.data.datasets[0].data=newRates; rateChartInstance.update();
+                updateInputsFromRateChart(newRates);
+                rateChartInstance.data.datasets[0].data=newRates;
+                rateChartInstance.update();
               }
             }
           }
@@ -304,7 +324,7 @@
       const amount=parseAmount(document.getElementById('amount').value);
       const years=+document.getElementById('years').value, months=years*12;
       const repaymentType=document.querySelector("input[name='repaymentType']:checked").value;
-      const rates=[...document.querySelectorAll('.rate-input')].map(el=>parseFloat(el.value)/100);
+      const rates=[...document.querySelectorAll('.half-rate-input')].map(el=>parseFloat(el.value)/100);
       if(!amount||!years) return alert('借入額と返済期間を入力してください。');
       if(rates.length<Math.ceil(months/6)) return alert('金利の入力が不足しています。');
 
