@@ -24,10 +24,21 @@
     .rate-input-row span { width: 20%; font-size: 0.95rem; }
     .rate-input-row input { width: 35%; }
     .note { font-size: 0.9rem; color: #444; margin: 0.25rem 0 0.4rem; }
+
+    /* タブ風ナビ */
+    .nav { display:flex; gap:.5rem; justify-content:center; margin: .5rem 0 1rem; }
+    .nav a { padding:.4rem .8rem; border-radius:9999px; text-decoration:none; background:#e6eef7; color:#00436d; font-size:.95rem; }
+    .nav a.active { background:#005b96; color:#fff; }
   </style>
 </head>
 <body onload="generateRateInputs()">
   <h1>🏠 住宅ローンシミュレーター（5年/125% ルール修正版）</h1>
+
+  <!-- タブ切り替え -->
+  <div class="nav">
+    <a href="../index.html">ルールなし</a>
+    <a href="./index.html" class="active">5年/125% ルールあり</a>
+  </div>
 
   <!-- 借入額（万円単位） -->
   <div class="section-title">借入額（万円）</div>
